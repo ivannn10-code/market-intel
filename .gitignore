@@ -22,3 +22,6 @@ logs/
 _server_setup/
 .business/
 *.tmp
+
+# Server setup tools — могут содержать креды
+_server_setup/
