@@ -1,0 +1,262 @@
+folders:
+- folder: Рабочие чаты
+  is_chatlist: true
+  channels:
+  - tg_id: 5254976295
+    username: null
+    title: Покупка квартиры в Москве | новостройки
+    is_chat: true
+  - tg_id: 5253749148
+    username: null
+    title: Сделка Тушинский, 9 Военная Ипотека
+    is_chat: true
+  - tg_id: 4996334167
+    username: null
+    title: BV chat Ольга/Павел/Иван
+    is_chat: true
+  - tg_id: 4929325724
+    username: null
+    title: СПБ НОВОСТРОЙКИ
+    is_chat: true
+  - tg_id: 4911313656
+    username: null
+    title: Лидогенерация Новостройки Москва
+    is_chat: true
+  - tg_id: 4598772574
+    username: null
+    title: ИП Гладышев - Битрикс24
+    is_chat: true
+  - tg_id: 4215087733
+    username: null
+    title: GIGGRAD - найм HR
+    is_chat: true
+  - tg_id: 3882210173
+    username: null
+    title: ФинПроект-1 - ГК «Ландия»
+    is_chat: true
+  - tg_id: 3867494443
+    username: null
+    title: Коммерческий отдел (рабочая группа)
+    is_chat: true
+  - tg_id: 3841181275
+    username: null
+    title: Иван видео-контент
+    is_chat: true
+  - tg_id: 3780927545
+    username: null
+    title: Группа с Захаром)
+    is_chat: true
+  - tg_id: 2859228526
+    username: null
+    title: Гео Агенство Недвижимости
+    is_chat: true
+  - tg_id: 2738087637
+    username: null
+    title: Отдел продаж SUNSIDE
+    is_chat: true
+  - tg_id: 2613629017
+    username: null
+    title: SUNSIDE ТОПы
+    is_chat: true
+  - tg_id: 2515423644
+    username: null
+    title: Эффективная десятка 🔥
+    is_chat: true
+  - tg_id: 2425312886
+    username: null
+    title: Marketing SUNSIDE Новостройки
+    is_chat: true
+  - tg_id: 1909946006
+    username: null
+    title: SUNSIDE офис
+    is_chat: true
+  - tg_id: 1936301644
+    username: sunside_agency
+    title: SUNSIDE Новостройки
+    is_chat: false
+  - tg_id: 2072460165
+    username: SingularityAppBot
+    title: SingularityBot
+    is_chat: false
+- folder: Застройщики
+  is_chatlist: true
+  channels:
+  - tg_id: 2690423410
+    username: mrgroupoffice
+    title: MR Office
+    is_chat: false
+  - tg_id: 2119173879
+    username: upside_friends
+    title: UPSIDE FRIENDS | Канал для брокеров
+    is_chat: false
+  - tg_id: 1984053102
+    username: brusnikamscw
+    title: Брусника | Партнеры | Мск
+    is_chat: false
+  - tg_id: 1871585492
+    username: osnovabrokers
+    title: Основа BROKERS
+    is_chat: false
+  - tg_id: 1862476748
+    username: null
+    title: КОЛДИ BROKER
+    is_chat: false
+  - tg_id: 1529178260
+    username: forma_partner
+    title: FORMA.Партнеры
+    is_chat: false
+  - tg_id: 1512807752
+    username: pioneer_partners
+    title: PIONEER Partners
+    is_chat: false
+  - tg_id: 1374627976
+    username: sminexbroker
+    title: Sminex brokers
+    is_chat: false
+  - tg_id: 1211267654
+    username: stone_developer
+    title: STONE
+    is_chat: false
+  - tg_id: 1201188570
+    username: agent_fsk
+    title: Agent.fsk.ru
+    is_chat: false
+  - tg_id: 1190009211
+    username: mrgroupbro
+    title: MR BRO | MR для брокеров
+    is_chat: false
+  - tg_id: 1180337287
+    username: etaloninv
+    title: Эталон.ПРО Москва
+    is_chat: false
+  - tg_id: 1953522834
+    username: null
+    title: STONE Партнеры
+    is_chat: true
+  - tg_id: 1800050535
+    username: iRealtco
+    title: iRealt ГК Кортрос
+    is_chat: true
+  - tg_id: 3513351417
+    username: null
+    title: Контент от Брусники (Мск, МО)
+    is_chat: true
+  - tg_id: 7504038560
+    username: STONE_brokers_bot
+    title: Мурррсин
+    is_chat: false
+- folder: Недвижка
+  is_chatlist: true
+  channels:
+  - tg_id: 1974528959
+    username: Broker_Polyakov
+    title: Дневник Брокера
+    is_chat: false
+  - tg_id: 1587040273
+    username: novostroykimoscow
+    title: Новостройки Москвы | Home Expert
+    is_chat: false
+  - tg_id: 1885230045
+    username: trendagent
+    title: TrendAgent
+    is_chat: false
+  - tg_id: 1644160924
+    username: risrf
+    title: РИС.РФ
+    is_chat: false
+  - tg_id: 1457535831
+    username: nmarket_pro
+    title: Нмаркет.ПРО – для риелторов
+    is_chat: false
+  - tg_id: 1963694122
+    username: null
+    title: OPENCITY
+    is_chat: false
+  - tg_id: 1506663034
+    username: trendagent_msk
+    title: TrendAgent Москва
+    is_chat: false
+  - tg_id: 1501142899
+    username: whitewillestate
+    title: Whitewill | Недвижимость Москвы и Санкт-Петербурга
+    is_chat: false
+  - tg_id: 1697433693
+    username: msk_novostroyki
+    title: Новостройки Москвы
+    is_chat: false
+  - tg_id: 1627015673
+    username: nedvizhimost_betonn
+    title: По уши в Бетоне • Недвижимость
+    is_chat: false
+  - tg_id: 1569852719
+    username: null
+    title: Недвижимость Москвы
+    is_chat: false
+  - tg_id: 1159581290
+    username: lotinfophuket
+    title: Как риелтору зарабатывать на зарубежной недвижимости
+    is_chat: false
+  - tg_id: 1296814753
+    username: nporaschetu
+    title: Новостройка по расчету
+    is_chat: false
+  - tg_id: 1223136500
+    username: propertyinsider
+    title: Недвижимость инсайды
+    is_chat: false
+  - tg_id: 1104154694
+    username: novostroyman
+    title: Novostroyman. Москва. Недвижимость
+    is_chat: false
+  - tg_id: 1185958857
+    username: kremnev_nedvizhimost
+    title: Кремнев | Недвижимость
+    is_chat: false
+  - tg_id: 1343912056
+    username: inssmart
+    title: Инссмарт Страхование
+    is_chat: false
+  - tg_id: 1295761731
+    username: SamoletPlusAgents
+    title: Домбук Плюс Москва и МО
+    is_chat: false
+  - tg_id: 1269943581
+    username: podeshevelo_msk
+    title: Подешевело МСК
+    is_chat: false
+  - tg_id: 1136080931
+    username: nedvizha
+    title: Недвижа
+    is_chat: false
+  - tg_id: 1658828356
+    username: realtorfromsiberia
+    title: Риэлтор из Сибири. В Москве
+    is_chat: false
+  - tg_id: 5568900272
+    username: oz_msk_expert_bot
+    title: Новостройки Москвы | Объединение застройщиков
+    is_chat: false
+  - tg_id: 6660938341
+    username: KREMNEV_BOT
+    title: Anton Kremnev
+    is_chat: false
+  - tg_id: 6273910710
+    username: homexpert_bot
+    title: Новостройки Москвы Home Expert
+    is_chat: false
+  - tg_id: 386616887
+    username: NmarketPRO_bot
+    title: NmarketPRO
+    is_chat: false
+  - tg_id: 6852112338
+    username: moscow_tns_bot
+    title: Новые ЖК в Москве. Полный каталог от застройщиков
+    is_chat: false
+  - tg_id: 6289704166
+    username: inssmart_tgbot
+    title: inssmart — Платформа для агентов и риелторов
+    is_chat: false
+  - tg_id: 5514551892
+    username: whitewillestatebot
+    title: Whitewill
+    is_chat: false

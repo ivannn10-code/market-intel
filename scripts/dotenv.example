@@ -1,0 +1,59 @@
+# Получить на https://my.telegram.org → API development tools
+TELEGRAM_API_ID=
+TELEGRAM_API_HASH=
+
+# Номер телефона аккаунта Telegram (с +7...)
+TELEGRAM_PHONE=
+
+# Telegram folder share-ссылки для импорта (через запятую). Использовать только при первом запуске init.py.
+# Пример: TELEGRAM_FOLDER_INVITES=https://t.me/addlist/_UqsunmXhF9hNjli,https://t.me/addlist/bb2t_WekrkQ2ODI6
+TELEGRAM_FOLDER_INVITES=
+
+# Названия папок Telegram, которые парсим (через запятую). Если пусто — парсятся все каналы из всех "addlist"-папок.
+# Пример: TELEGRAM_FOLDER_NAMES=Недвижимость,Застройщики Москвы
+TELEGRAM_FOLDER_NAMES=
+
+# Anthropic API key (https://console.anthropic.com)
+ANTHROPIC_API_KEY=
+
+# Модель Claude для обработки. Sonnet — надёжнее в structured outputs; Haiku — дешевле, но иногда галлюцинирует.
+ANTHROPIC_MODEL=claude-sonnet-4-6
+# Альтернатива (дешевле в 5×, но иногда даёт сбои в batch JSON): claude-haiku-4-5-20251001
+
+# Сколько часов назад брать посты при ежедневном запуске
+LOOKBACK_HOURS=26
+
+# Куда слать утренний дайджест и алерты. По умолчанию — "me" (Saved Messages).
+# Можно поставить @username канала, который ты сам создал для дайджестов.
+TELEGRAM_DIGEST_TO=me
+
+# Порог важности (1-5) для мгновенных алертов в Telegram. По умолчанию 4.
+# Пост с importance ≥ этого значения улетит тебе сразу при обработке.
+ALERT_IMPORTANCE_THRESHOLD=4
+
+# === Visual Pipeline (AI-генерация изображений для каруселей) ===
+
+# Google Gemini API key — получить на https://aistudio.google.com/apikey
+# Используется в .business/visual-pipeline/generators/nano_banana.py
+GEMINI_API_KEY=
+
+# Модель для генерации изображений:
+#   gemini-2.5-flash-image       — Nano Banana 2 (быстро, дёшево, базовое качество)
+#   gemini-3-pro-image-preview   — Nano Banana Pro (медленнее, дороже, выше качество)
+# Подставь актуальное имя на момент использования (Google периодически переименовывает).
+GEMINI_IMAGE_MODEL=gemini-2.5-flash-image
+
+# Replicate API token — fallback к Gemini, если Google Cloud billing не подключён
+# или Gemini временно недоступен из текущей сети.
+# Создать токен: https://replicate.com/account/api-tokens (вход через GitHub)
+# Привязать карту: https://replicate.com/account/billing
+# Используется в .business/visual-pipeline/generators/replicate.py
+REPLICATE_API_TOKEN=
+
+# Модель Replicate (формат owner/name):
+#   black-forest-labs/flux-1.1-pro       — дефолт, ~$0.04/image, баланс цена/качество для editorial photography
+#   black-forest-labs/flux-1.1-pro-ultra — ~$0.06, выше разрешение
+#   black-forest-labs/flux-pro           — ~$0.055, чуть детальнее, медленнее
+#   bytedance/seedream-3                 — ~$0.03, азиатская школа фотореализма
+#   google/imagen-3                      — ~$0.05, Google text→image (доступен без Google Cloud billing)
+REPLICATE_IMAGE_MODEL=black-forest-labs/flux-1.1-pro

@@ -1,0 +1,24 @@
+# Секреты
+scripts/.env
+scripts/*.session
+scripts/*.session-journal
+
+# venv
+venv/
+__pycache__/
+*.pyc
+
+# БД и raw — слишком большие, синхронизируется через digest/
+intel.db
+intel.db-wal
+intel.db-shm
+raw/
+
+# Логи
+logs/
+*.log
+
+# Локальные временные файлы
+_server_setup/
+.business/
+*.tmp
