@@ -44,12 +44,13 @@ def get_me() -> dict:
     return _get("getMe")
 
 
-def get_updates(offset: int | None = None, timeout: int = 25) -> list[dict]:
-    """Long polling getUpdates. timeout — сколько ждёт Telegram держать соединение
-    при отсутствии новых сообщений (long polling, экономит запросы)."""
+def get_updates(offset: int | None = None, timeout: int = 25, allowed_updates: list[str] | None = None) -> list[dict]:
+    """Long polling getUpdates."""
     params = {"timeout": timeout}
     if offset is not None:
         params["offset"] = offset
+    if allowed_updates:
+        params["allowed_updates"] = json.dumps(allowed_updates)
     token = config.env("TELEGRAM_BOT_TOKEN", required=True)
     url = f"https://api.telegram.org/bot{token}/getUpdates?" + urllib.parse.urlencode(params)
     try:
@@ -58,6 +59,19 @@ def get_updates(offset: int | None = None, timeout: int = 25) -> list[dict]:
             return r.get("result", []) if r.get("ok") else []
     except (urllib.error.URLError, TimeoutError):
         return []
+
+
+def answer_callback_query(callback_query_id: str, text: str = "", show_alert: bool = False):
+    """Ответ на нажатие inline-кнопки — снимает 'часики' с кнопки."""
+    payload = {"callback_query_id": callback_query_id}
+    if text:
+        payload["text"] = text
+    if show_alert:
+        payload["show_alert"] = True
+    try:
+        _request("answerCallbackQuery", payload)
+    except Exception:
+        pass
 
 
 def send_chat_action(chat_id: str | int, action: str = "typing") -> None:

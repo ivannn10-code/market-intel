@@ -1,0 +1,31 @@
+﻿# Получить на https://my.telegram.org → API development tools
+TELEGRAM_API_ID=30484951
+TELEGRAM_API_HASH=af4a836a058e3189d6f6a6e44b7fb1d2
+
+# Номер телефона аккаунта Telegram (с +7...)
+TELEGRAM_PHONE=+79250788090
+
+# Telegram folder share-ссылки для импорта (через запятую). Использовать только при первом запуске init.py.
+# Пример: TELEGRAM_FOLDER_INVITES=https://t.me/addlist/_UqsunmXhF9hNjli,https://t.me/addlist/bb2t_WekrkQ2ODI6
+TELEGRAM_FOLDER_INVITES=
+
+# Названия папок Telegram, которые парсим (через запятую). Если пусто — парсятся все каналы из всех "addlist"-папок.
+# Пример: TELEGRAM_FOLDER_NAMES=Недвижимость,Застройщики Москвы
+TELEGRAM_FOLDER_NAMES=
+
+# Anthropic API key (https://console.anthropic.com)
+ANTHROPIC_API_KEY=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
+
+# Модель Claude для обработки. Haiku — дёшево и быстро для саммаризации.
+ANTHROPIC_MODEL=claude-haiku-4-5-20251001
+
+# Сколько часов назад брать посты при ежедневном запуске
+LOOKBACK_HOURS=26
+
+# Telegram-бот для отправки дайджестов и алертов
+TELEGRAM_BOT_TOKEN=8816150036:AAHKK3Ic3e9hkVbbLdPd6XwJFC30Z73FALE
+# chat_id заполнится автоматически после первого запуска bot_setup.py
+TELEGRAM_BOT_CHAT_ID=1156058491
+
+GEMINI_API_KEY=AIzaSyDDaizXpgG6ISPi7D_vfr9z-lwGLRMJVKE
+GEMINI_IMAGE_MODEL=gemini-2.5-flash-image

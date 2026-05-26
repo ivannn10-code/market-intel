@@ -110,6 +110,23 @@ CREATE TABLE IF NOT EXISTS bot_offset (
     update_id   INTEGER NOT NULL DEFAULT 0
 );
 INSERT OR IGNORE INTO bot_offset (id, update_id) VALUES (1, 0);
+
+CREATE TABLE IF NOT EXISTS bot_chat_history (
+    id          INTEGER PRIMARY KEY,
+    chat_id     TEXT NOT NULL,
+    role        TEXT NOT NULL CHECK (role IN ('user', 'assistant')),
+    content     TEXT NOT NULL,
+    created_at  TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_chat_history_chat ON bot_chat_history(chat_id, created_at);
+
+CREATE TABLE IF NOT EXISTS bot_last_post (
+    chat_id     TEXT PRIMARY KEY,
+    post_path   TEXT NOT NULL,
+    rubric      TEXT,
+    topic       TEXT,
+    created_at  TEXT NOT NULL
+);
 """
 
 
@@ -308,6 +325,54 @@ class DB:
     def was_notified(self, post_id: int) -> bool:
         cur = self.conn.execute("SELECT 1 FROM notifications WHERE post_id=?", (post_id,))
         return cur.fetchone() is not None
+
+    # === Chat history ===
+
+    def add_chat_message(self, chat_id: str, role: str, content: str) -> int:
+        cur = self.conn.execute(
+            """INSERT INTO bot_chat_history (chat_id, role, content, created_at)
+               VALUES (?, ?, ?, ?) RETURNING id""",
+            (chat_id, role, content, datetime.utcnow().isoformat()),
+        )
+        return cur.fetchone()[0]
+
+    def get_chat_history(self, chat_id: str, limit: int = 20) -> list[dict]:
+        """Возвращает последние N сообщений диалога (в хронологическом порядке)."""
+        cur = self.conn.execute(
+            """SELECT role, content FROM bot_chat_history
+               WHERE chat_id = ? ORDER BY id DESC LIMIT ?""",
+            (chat_id, limit),
+        )
+        rows = list(cur.fetchall())
+        rows.reverse()
+        return [{"role": r["role"], "content": r["content"]} for r in rows]
+
+    def clear_chat_history(self, chat_id: str):
+        self.conn.execute("DELETE FROM bot_chat_history WHERE chat_id = ?", (chat_id,))
+
+    # === Last post tracking (для перегенерации) ===
+
+    def save_last_post(self, chat_id: str, post_path: str, rubric: str | None, topic: str | None):
+        self.conn.execute(
+            """INSERT INTO bot_last_post (chat_id, post_path, rubric, topic, created_at)
+               VALUES (?, ?, ?, ?, ?)
+               ON CONFLICT(chat_id) DO UPDATE SET
+                 post_path=excluded.post_path,
+                 rubric=excluded.rubric,
+                 topic=excluded.topic,
+                 created_at=excluded.created_at""",
+            (chat_id, post_path, rubric, topic, datetime.utcnow().isoformat()),
+        )
+
+    def get_last_post(self, chat_id: str) -> dict | None:
+        cur = self.conn.execute(
+            "SELECT post_path, rubric, topic, created_at FROM bot_last_post WHERE chat_id=?",
+            (chat_id,),
+        )
+        row = cur.fetchone()
+        return dict(row) if row else None
+
+    # === Bot states ===
 
     def get_bot_state(self, chat_id: str) -> tuple[str, str | None]:
         cur = self.conn.execute("SELECT state, payload FROM bot_state WHERE chat_id=?", (chat_id,))
