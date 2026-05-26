@@ -519,6 +519,11 @@ def save_post(date: dt.date, rubric: str, body: str, image_path: str | None = No
     content = "\n".join(fm_lines) + body.strip() + "\n"
 
     path = post_path(date, rubric)
+    # Защита от перезаписи готовых драфтов (которые Иван подготовил вручную).
+    # Чтобы пересоздать — удали файл вручную перед запуском.
+    if path.exists():
+        print(f"[gen] ⚠ файл уже существует, пропускаю: {path.relative_to(PROJECT_ROOT)}")
+        return path
     path.write_text(content, encoding="utf-8")
     return path
 

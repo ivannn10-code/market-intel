@@ -24,6 +24,9 @@ $PY -u notifier.py || echo "NOTIFIER FAILED, continuing"
 echo "--- [4/4] daily_digest ---"
 $PY -u daily_digest.py || echo "DIGEST FAILED"
 
+# Daily post generator + dispatcher (8:00 в cron-расписании отдельной строкой,
+# но если запускают вручную через run_daily.sh — тоже исполнится здесь)
+
 # git push на свежие изменения в digest/ (для локальной синхронизации)
 cd "$INSTALL_DIR"
 if [ -n "$(git status --porcelain digest/)" ]; then
