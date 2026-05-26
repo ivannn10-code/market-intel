@@ -25,3 +25,4 @@ _server_setup/
 
 # Server setup tools — могут содержать креды
 _server_setup/
+_deploy/_env_for_server.txt
