@@ -277,7 +277,7 @@ def deliver(date: dt.date, post_path: Path, *, dry_run: bool = False) -> dict[st
 
     summary = {
         "date": date.isoformat(),
-        "post_file": str(post_path.relative_to(REPO_ROOT)),
+        "post_file": str(post_path.relative_to(PROJECT_ROOT)),
         "rubric": rubric,
         "image": image_rel,
         "carousel": is_carousel,
@@ -305,14 +305,14 @@ def deliver(date: dt.date, post_path: Path, *, dry_run: bool = False) -> dict[st
 
     # 2) визуал — карусель (mediaGroup) или одна картинка
     if image_rel:
-        image_path = (REPO_ROOT / ".business" / "marketing" / "telegram-daily" / image_rel).resolve()
+        image_path = (HERE / image_rel).resolve()
         if is_carousel:
             # image_rel указывает на ПАПКУ с PNG-слайдами (slide-01.png, slide-02.png, …)
             if image_path.exists() and image_path.is_dir():
                 slides = sorted(image_path.glob("slide-*.png"))
                 if 2 <= len(slides) <= 10:
                     bot.send_media_group(chat_id, slides, caption=f"🎠 Карусель {len(slides)} слайдов · {image_path.name}")
-                    log(date, f"carousel sent: {len(slides)} slides from {image_path.relative_to(REPO_ROOT)}")
+                    log(date, f"carousel sent: {len(slides)} slides from {image_path.relative_to(HERE)}")
                 elif len(slides) == 1:
                     bot.send_photo(chat_id, slides[0], caption=f"🖼 Слайд · {slides[0].name}")
                     log(date, f"carousel had only 1 slide, sent as photo")
@@ -326,7 +326,7 @@ def deliver(date: dt.date, post_path: Path, *, dry_run: bool = False) -> dict[st
             # одна картинка
             if image_path.exists() and image_path.is_file():
                 bot.send_photo(chat_id, image_path, caption=f"🖼 Картинка к посту · {image_path.name}")
-                log(date, f"image sent: {image_path.relative_to(REPO_ROOT)}")
+                log(date, f"image sent: {image_path.relative_to(HERE)}")
             else:
                 bot.send_message(
                     chat_id,

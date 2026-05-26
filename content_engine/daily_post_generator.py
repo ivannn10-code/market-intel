@@ -589,7 +589,7 @@ def main() -> int:
         return 0
 
     path = save_post(date, rubric, body, image_path=args.image_path, sources=args.source or [])
-    print(f"[gen] ✓ сохранён: {path.relative_to(REPO_ROOT)}")
+    print(f"[gen] ✓ сохранён: {path.relative_to(PROJECT_ROOT)}")
     return 0
 
 
