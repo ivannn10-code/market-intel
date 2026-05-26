@@ -19,10 +19,10 @@ echo "============================================"
 echo ""
 
 # 1. Установка системных зависимостей
-echo "[1/7] apt update + install Python3.10 venv, git, sqlite, curl..."
+echo "[1/7] apt update + install Python venv, git, sqlite, curl..."
 apt-get update -qq
 DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-    python3.10 python3.10-venv python3-pip \
+    python3 python3-venv python3-pip \
     git sqlite3 curl ca-certificates tzdata \
     2>&1 | tail -3
 
@@ -49,7 +49,7 @@ fi
 # 4. Создание venv и установка Python-зависимостей
 echo "[4/7] venv + pip install..."
 if [ ! -d "$INSTALL_DIR/venv" ]; then
-    python3.10 -m venv "$INSTALL_DIR/venv"
+    python3 -m venv "$INSTALL_DIR/venv"
 fi
 "$INSTALL_DIR/venv/bin/pip" install --quiet --upgrade pip
 "$INSTALL_DIR/venv/bin/pip" install --quiet -r "$INSTALL_DIR/scripts/requirements.txt"
