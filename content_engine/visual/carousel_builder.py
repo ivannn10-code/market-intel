@@ -74,14 +74,14 @@ html,body{width:1080px;height:1350px;overflow:hidden;background:var(--bg);}
 .huge-num{position:absolute;bottom:26px;right:48px;font-family:'PT Serif',serif;font-weight:700;
   font-style:italic;font-size:220px;line-height:0.85;letter-spacing:-8px;color:rgba(231,226,216,0.08);
   z-index:2;user-select:none;pointer-events:none;}
-.slide.overlay-cta .huge-num{color:rgba(231,226,216,0.14);}
+.slide.overlay-cta .huge-num{display:none;}
 /* мини-тег */
 .mini-tag{font-weight:600;font-size:20px;letter-spacing:3.4px;text-transform:uppercase;color:var(--accent);
   display:inline-flex;align-items:center;border-left:3px solid var(--accent);padding:8px 0 8px 20px;}
 .slide.overlay-cta .watermark .mark{color:var(--accent);}
 /* HERO */
-.hero-quote-section{margin-top:54px;max-width:480px;margin-left:auto;text-align:right;}
-.hero-quote{font-family:'PT Serif',serif;font-style:italic;font-size:32px;line-height:1.3;color:var(--accent);}
+.hero-quote-section{margin-top:150px;max-width:760px;margin-left:auto;margin-right:auto;text-align:center;}
+.hero-quote{font-family:'PT Serif',serif;font-style:italic;font-size:50px;line-height:1.28;color:var(--accent);}
 .hero-body{flex:1;display:flex;flex-direction:column;justify-content:flex-end;padding-bottom:22px;}
 .hero-tag-row{margin-bottom:72px;}
 .hero-headline{font-family:'PT Serif',serif;font-weight:700;font-size:80px;line-height:1.03;
@@ -147,8 +147,7 @@ html,body{width:1080px;height:1350px;overflow:hidden;background:var(--bg);}
 .cta-sub{font-size:30px;line-height:1.45;color:var(--text);margin-top:34px;max-width:760px;}
 .cta-sub .codeword{font-family:'PT Serif',serif;font-weight:700;font-style:italic;color:var(--text);
   background:rgba(11,46,56,0.55);padding:2px 14px;border-radius:4px;letter-spacing:1px;}
-.cta-footer{display:flex;align-items:flex-end;justify-content:space-between;padding-top:44px;
-  margin-top:44px;border-top:1px solid rgba(231,226,216,0.35);}
+.cta-footer{display:flex;align-items:flex-end;justify-content:space-between;padding-top:44px;margin-top:44px;}
 .cta-author-name{font-family:'PT Serif',serif;font-weight:700;font-size:30px;color:var(--text);}
 .cta-author-meta{font-size:17px;letter-spacing:0.6px;color:rgba(231,226,216,0.85);margin-top:6px;}
 .cta-handle{font-weight:600;font-size:22px;letter-spacing:0.8px;color:var(--text);
@@ -179,11 +178,12 @@ def fmt(s: str) -> str:
     return out
 
 
-def _top_row(idx: int, total: int) -> str:
+def _top_row(idx: int, total: int, mark: bool = True) -> str:
+    # Пагинатор-пилюля убран (позицию показывает крупная фоновая цифра). ✱ — опционально.
+    star = '<span class="mark">✱</span>' if mark else ""
     return (
         '<div class="top-row">'
-        '<div class="watermark"><span class="mark">✱</span><span>ИГ · Недвижимость Москвы</span></div>'
-        f'<div class="pager-pill">{idx:02d} / {total:02d}</div></div>'
+        f'<div class="watermark">{star}<span>ИГ · Недвижимость Москвы</span></div></div>'
     )
 
 
@@ -283,7 +283,7 @@ def slide_cta(idx: int, total: int, cta: dict, bg_file: str | None) -> str:
     if cta.get("codeword"):
         sub = sub.replace(esc(cta["codeword"]), f'<span class="codeword">{esc(cta["codeword"])}</span>')
     inner = (
-        _top_row(idx, total)
+        _top_row(idx, total, mark=False)
         + '<div class="cta-body">'
         + f'<div><div class="cta-tag-row">{_mini_tag(cta.get("label","Решаю задачу капитала"))}</div>'
         + f'<div class="cta-headline">{fmt(cta.get("title",""))}</div>'
