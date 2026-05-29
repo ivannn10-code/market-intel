@@ -32,6 +32,7 @@ from anthropic import Anthropic
 HERE = Path(__file__).resolve().parent
 PROJECT_ROOT = HERE.parent
 sys.path.insert(0, str(PROJECT_ROOT / "content_engine"))
+sys.path.insert(0, str(PROJECT_ROOT / "content_engine" / "visual"))
 
 import analytics
 import bot
@@ -47,6 +48,7 @@ ERROR_BACKOFF = 5
 
 BTN_POST_TOPIC = "📝 Пост на тему"
 BTN_REGEN = "🔄 Перегенерить"
+BTN_CAROUSEL = "🎨 Создать карусель"
 BTN_SCHEDULE = "📅 Расписание недели"
 BTN_CHAT = "💬 Чат с Claude"
 BTN_ANALYTICS = "🔍 Аналитика рынка"
@@ -56,6 +58,7 @@ BTN_CHAT_EXIT = "✓ Завершить чат"
 
 KEYBOARD = [
     [BTN_POST_TOPIC, BTN_REGEN],
+    [BTN_CAROUSEL],
     [BTN_SCHEDULE, BTN_CHAT],
     [BTN_ANALYTICS],
     [BTN_WEEKLY, BTN_SENTIMENT],
@@ -351,6 +354,82 @@ def handle_chat_exit(chat_id: str, db: DB) -> None:
     bot.send_message(chat_id, "✓ Чат завершён. История сохранена.", reply_keyboard=KEYBOARD)
 
 
+# === Создать карусель ===
+
+def handle_carousel_request(chat_id: str, db: DB, client: Anthropic, model: str) -> None:
+    """Кнопка «Создать карусель» → Claude предлагает 3 темы → inline-кнопки выбора."""
+    import json as _json
+    import carousel_builder as cb
+
+    bot.send_chat_action(chat_id, "typing")
+    bot.send_message(chat_id, "🎨 Подбираю 3 темы из свежих фактов рынка... (10-15 сек)")
+    bot.send_chat_action(chat_id, "typing")
+    try:
+        facts = cb.fetch_recent_facts(db, days=7)
+        topics = cb.propose_topics(facts, client, model)
+        if not topics or len(topics) < 3:
+            bot.send_message(chat_id, "<b>Не удалось подобрать темы.</b> Попробуй ещё раз.", reply_keyboard=KEYBOARD)
+            return
+        # Сохраняем темы в state payload
+        db.set_bot_state(chat_id, "carousel_choice", _json.dumps(topics, ensure_ascii=False))
+        # Текст + inline-кнопки
+        lines = ["🎨 <b>3 темы для карусели:</b>\n"]
+        for i, t in enumerate(topics, 1):
+            lines.append(f"<b>{i}. {bot.html_escape(t['title'])}</b>\n<i>{bot.html_escape(t.get('angle',''))}</i>\n")
+        lines.append("Выбери тему кнопкой ниже или запроси другие 3.")
+        buttons = [
+            [{"text": f"1️⃣", "callback_data": "car:0"}, {"text": "2️⃣", "callback_data": "car:1"}, {"text": "3️⃣", "callback_data": "car:2"}],
+            [{"text": "🔄 Другие 3 темы", "callback_data": "car:more"}],
+        ]
+        bot.send_message(chat_id, "\n".join(lines), buttons=buttons)
+    except Exception as exc:
+        bot.send_message(chat_id, f"<b>Ошибка:</b>\n<code>{bot.html_escape(str(exc))}</code>", reply_keyboard=KEYBOARD)
+        db.set_bot_state(chat_id, "idle")
+
+
+def handle_carousel_generate(chat_id: str, topic_idx: int, db: DB, client: Anthropic, model: str) -> None:
+    """Генерация выбранной карусели: контент → HTML → PNG → отправка."""
+    import json as _json
+    from pathlib import Path as _Path
+    import carousel_builder as cb
+
+    state, payload = db.get_bot_state(chat_id)
+    if state != "carousel_choice" or not payload:
+        bot.send_message(chat_id, "Сессия выбора истекла. Нажми «🎨 Создать карусель» заново.", reply_keyboard=KEYBOARD)
+        return
+    topics = _json.loads(payload)
+    if topic_idx >= len(topics):
+        bot.send_message(chat_id, "Тема не найдена.", reply_keyboard=KEYBOARD)
+        return
+
+    topic = topics[topic_idx]["title"]
+    db.set_bot_state(chat_id, "idle")
+    bot.send_message(chat_id, f"🎨 Генерю карусель: <i>{bot.html_escape(topic)}</i>\nЭто 40-70 секунд (Claude пишет слайды + рендер PNG)...")
+    bot.send_chat_action(chat_id, "upload_photo")
+
+    try:
+        facts = cb.fetch_recent_facts(db, days=7)
+        content = cb.generate_carousel_content(topic, facts, client, model)
+        if not content:
+            bot.send_message(chat_id, "<b>Claude не вернул структуру карусели.</b> Попробуй снова.", reply_keyboard=KEYBOARD)
+            return
+        import time as _t
+        out_dir = _Path("/opt/apps/market-intel/content_engine/visual/generated") / f"carousel-{int(_t.time())}"
+        pngs = cb.build_carousel(content, out_dir)
+        if not (2 <= len(pngs) <= 10):
+            bot.send_message(chat_id, f"<b>Нестандартное число слайдов: {len(pngs)}</b>", reply_keyboard=KEYBOARD)
+            return
+        bot.send_chat_action(chat_id, "upload_photo")
+        bot.send_media_group(chat_id, pngs, caption=f"🎨 {topic} · {len(pngs)} слайдов")
+        # Подпись + хэштеги + первый коммент в <pre> для копирования
+        cap = cb.caption_md(content)
+        bot.send_message(chat_id, f"📝 <b>Подпись + хэштеги + первый коммент</b> (нажми чтобы скопировать):\n\n<pre>{bot.html_escape(cap)}</pre>", reply_keyboard=KEYBOARD)
+    except Exception as exc:
+        import traceback as _tb
+        bot.send_message(chat_id, f"<b>Ошибка генерации карусели:</b>\n<code>{bot.html_escape(str(exc))}</code>", reply_keyboard=KEYBOARD)
+        print(_tb.format_exc())
+
+
 # ============================================================================
 # Главный роутер
 # ============================================================================
@@ -360,7 +439,16 @@ def process_update(update: dict, db: DB, client: Anthropic, model: str, allowed_
     cq = update.get("callback_query")
     if cq:
         bot.answer_callback_query(cq["id"])
-        # Простая поддержка callback'ов — пока без них, но готов задел
+        data = cq.get("data", "")
+        cq_chat = str(cq.get("message", {}).get("chat", {}).get("id", ""))
+        if cq_chat != str(allowed_chat_id):
+            return
+        if data.startswith("car:"):
+            choice = data.split(":", 1)[1]
+            if choice == "more":
+                handle_carousel_request(cq_chat, db, client, model)
+            elif choice.isdigit():
+                handle_carousel_generate(cq_chat, int(choice), db, client, model)
         return
 
     msg = update.get("message") or update.get("edited_message")
@@ -400,6 +488,9 @@ def process_update(update: dict, db: DB, client: Anthropic, model: str, allowed_
     if text == BTN_REGEN:
         db.set_bot_state(chat_id, "idle")
         handle_regenerate(chat_id, db)
+        return
+    if text == BTN_CAROUSEL:
+        handle_carousel_request(chat_id, db, client, model)
         return
     if text == BTN_SCHEDULE:
         db.set_bot_state(chat_id, "idle")

@@ -316,3 +316,36 @@ def caption_md(content: dict) -> str:
     tags = " ".join(content.get("hashtags", []))
     fc = content.get("first_comment", "")
     return f"{cap}\n\n{tags}\n\n— Первый комментарий —\n{fc}"
+
+
+def fetch_recent_facts(db, days: int = 7, limit: int = 40) -> str:
+    """Берёт топ релевантных фактов из market-intel за N дней — для тем и контента карусели."""
+    from datetime import datetime, timedelta, timezone
+    since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+    cur = db.conn.execute(
+        """SELECT p.date, p.text,
+                  MAX(CASE WHEN t.kind='importance' THEN CAST(t.value AS INTEGER) END) AS importance,
+                  GROUP_CONCAT(DISTINCT CASE WHEN t.kind='developer' THEN t.value END) AS developers,
+                  GROUP_CONCAT(DISTINCT CASE WHEN t.kind='zhk' THEN t.value END) AS zhk,
+                  GROUP_CONCAT(DISTINCT CASE WHEN t.kind='bc' THEN t.value END) AS bc,
+                  GROUP_CONCAT(DISTINCT CASE WHEN t.kind='topic' THEN t.value END) AS topics
+           FROM posts p
+           JOIN post_tags pt ON pt.post_id = p.id
+           JOIN tags t ON t.id = pt.tag_id
+           WHERE p.processed = 1 AND p.canonical_id IS NULL AND p.date >= ?
+           GROUP BY p.id
+           ORDER BY importance DESC, p.date DESC
+           LIMIT ?""",
+        (since, limit),
+    )
+    lines = []
+    for r in cur.fetchall():
+        d = dict(r)
+        ent = " · ".join(filter(None, [
+            (d.get("developers") or "").replace(",", ", "),
+            (d.get("zhk") or "").replace(",", ", "),
+            (d.get("bc") or "").replace(",", ", "),
+        ])) or ""
+        text = " ".join((d.get("text") or "").split())[:280]
+        lines.append(f"[{d['date'][:10]}] ⭐{d.get('importance') or 3} {ent} — {text}")
+    return "\n".join(lines) if lines else "Свежих фактов в базе нет."
