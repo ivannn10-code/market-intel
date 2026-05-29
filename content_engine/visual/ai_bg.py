@@ -29,13 +29,13 @@ DEFAULT_MODEL = os.environ.get("GEMINI_IMAGE_MODEL", "gemini-2.5-flash-image")
 # Бренд-tail из CLAUDE.md — приклеивается к каждому промпту, чтобы визуал
 # не вылезал из tone-of-voice. Только обобщённые метафоры, без реальных ЖК/БЦ/лиц.
 BRAND_TAIL = (
-    "cinematic editorial photography, restrained premium aesthetic, "
-    "palette of warm ivory (#F4F1EA), deep graphite (#14171C) and a singular "
-    "terracotta accent (#B85C3C), shot on medium format with soft natural light, "
-    "no excess saturation, no Instagram-filter look, architectural/interior "
-    "magazine quality, vertical 4:5 composition, generous negative space, "
-    "deep shadows for text overlay, no text, no logos, no watermarks, "
-    "no human faces, no real recognizable buildings — only generalized metaphors."
+    "cinematic editorial photography, modern premium aesthetic, "
+    "palette of deep teal (#0F3D4A), steel blue (#4A6A7B), warm light greige (#E7E2D8) "
+    "and a singular vivid orange accent (#FF5A2A), shot on medium format with soft "
+    "directional light, controlled saturation, no Instagram-filter look, "
+    "architectural/interior magazine quality, vertical 4:5 composition, generous "
+    "negative space, deep teal shadows for text overlay, no text, no logos, "
+    "no watermarks, no human faces, no real recognizable buildings — only generalized metaphors."
 )
 
 
