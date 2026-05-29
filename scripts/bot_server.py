@@ -417,7 +417,7 @@ def handle_carousel_generate(chat_id: str, topic_idx: int, db: DB, client: Anthr
 
     topic = topics[topic_idx]["title"]
     db.set_bot_state(chat_id, "idle")
-    bot.send_message(chat_id, f"🎨 Генерю карусель: <i>{bot.html_escape(topic)}</i>\nЭто 1.5–2.5 минуты: Claude пишет слайды → AI-фоны (Gemini) → рендер PNG. Пришлю по готовности.")
+    bot.send_message(chat_id, f"🎨 Генерю карусель: <i>{bot.html_escape(topic)}</i>\nЭто 2.5–3.5 мин: редакция агентов (бриф→факт-чек→слайды→вычитка) → AI-фоны (Gemini) → рендер PNG. Пришлю по готовности.")
     bot.send_chat_action(chat_id, "upload_photo")
 
     def _progress(msg: str) -> None:
@@ -429,7 +429,7 @@ def handle_carousel_generate(chat_id: str, topic_idx: int, db: DB, client: Anthr
 
     try:
         facts = cb.fetch_recent_facts(db, days=7)
-        content = cb.generate_carousel_content(topic, facts, client, model)
+        content = cb.generate_carousel_content(topic, facts, client, model, team=True, progress=_progress)
         if not content:
             bot.send_message(chat_id, "<b>Claude не вернул структуру карусели.</b> Попробуй снова.", buttons=MENU_INLINE)
             return

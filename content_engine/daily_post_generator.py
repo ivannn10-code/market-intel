@@ -63,6 +63,15 @@ if ENV_PATH.exists():
 
 import anthropic  # noqa: E402
 
+# Редакция агентов (команда ролей). Импорт защищён — если модуль недоступен,
+# генератор работает в одиночном режиме (single-call).
+sys.path.insert(0, str(HERE))
+try:
+    import agent_team  # noqa: E402
+except Exception as _e:  # pragma: no cover
+    agent_team = None
+    print(f"[gen] agent_team недоступен ({_e}) — одиночный режим")
+
 # Используем Sonnet 4.6 для качества — экспертный текст под премиум-бренд
 MODEL = os.environ.get("CONTENT_MODEL", "claude-sonnet-4-6")
 
@@ -488,7 +497,7 @@ def post_path(date: dt.date, rubric: str) -> Path:
     return folder / f"{date.isoformat()}-{weekday}-{rubric}.md"
 
 
-def save_post(date: dt.date, rubric: str, body: str, image_path: str | None = None, sources: list[str] | None = None) -> Path:
+def save_post(date: dt.date, rubric: str, body: str, image_path: str | None = None, sources: list[str] | None = None, generator: str = "v2_auto") -> Path:
     cfg = RUBRIC_CONFIG[rubric]
     weekday = WEEKDAY_CODES[date.weekday()]
     length = len(body.strip())
@@ -506,7 +515,7 @@ def save_post(date: dt.date, rubric: str, body: str, image_path: str | None = No
         f"voice: {'true' if cfg['voice'] else 'false'}",
         f"cta: {'true' if cfg['cta'] else 'false'}",
         "fact_check: required",
-        "generator: v2_auto",
+        f"generator: {generator}",
         f"model: {MODEL}",
     ]
     if sources:
@@ -543,6 +552,7 @@ def main() -> int:
     parser.add_argument("--image-path", help="Путь к картинке (relative to telegram-daily/), если есть")
     parser.add_argument("--source", action="append", help="Источник для frontmatter (можно несколько раз)")
     parser.add_argument("--dry-run", action="store_true", help="Не сохранять, только напечатать результат")
+    parser.add_argument("--no-team", action="store_true", help="Отключить редколлегию агентов (одиночный вызов)")
     args = parser.parse_args()
 
     try:
@@ -581,9 +591,34 @@ def main() -> int:
     )
 
     print(f"[gen] промпт собран ({len(user_prompt)} знаков)")
-    print(f"[gen] → зову Claude API ({MODEL})...")
 
-    body = call_claude(COMMON_PREFIX, user_prompt, max_tokens=args.max_tokens)
+    use_team = agent_team is not None and not args.no_team
+    team_produced = False
+    body = ""
+    if use_team:
+        # structure_hint — требования рубрики БЕЗ дампа сырых фактов (факты идут через fact_checker)
+        structure_hint = prompt_template.format(
+            facts="(используй блок ПРОВЕРЕННЫЕ ФАКТЫ)",
+            topic_hint=args.topic_hint, n_points=args.n_points,
+            length_min=cfg["length_min"], length_max=cfg["length_max"],
+        )
+        try:
+            print(f"[gen] → редколлегия агентов ({MODEL})...")
+            result = agent_team.produce(
+                content_type=rubric, platform="telegram", facts=facts,
+                structure_hint=structure_hint, topic=(args.topic_hint or rubric),
+                progress=lambda m: print(f"[team] {m}"),
+            )
+            body = (result or {}).get("text", "") or ""
+            if body:
+                team_produced = True
+                print(f"[gen] ✓ редколлегия: {len(body)} знаков, стадий: {len(result.get('stages', []))}")
+        except Exception as e:
+            print(f"[gen] ⚠ редколлегия упала → одиночный режим: {e}")
+
+    if not body:
+        print(f"[gen] → одиночный вызов Claude ({MODEL})...")
+        body = call_claude(COMMON_PREFIX, user_prompt, max_tokens=args.max_tokens)
     print(f"[gen] ✓ получен ответ ({len(body)} знаков)")
 
     if args.dry_run:
@@ -593,7 +628,8 @@ def main() -> int:
         print(body)
         return 0
 
-    path = save_post(date, rubric, body, image_path=args.image_path, sources=args.source or [])
+    path = save_post(date, rubric, body, image_path=args.image_path, sources=args.source or [],
+                     generator=("v2_team" if team_produced else "v2_auto"))
     print(f"[gen] ✓ сохранён: {path.relative_to(PROJECT_ROOT)}")
     return 0
 
