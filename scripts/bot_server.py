@@ -54,14 +54,16 @@ BTN_CHAT = "💬 Чат с Claude"
 BTN_ANALYTICS = "🔍 Аналитика рынка"
 BTN_WEEKLY = "📊 Сводка недели"
 BTN_SENTIMENT = "🌡 Температура рынка"
+BTN_COVER = "🖼 Картинка к тексту"
 BTN_CHAT_EXIT = "✓ Завершить чат"
 
 # Inline-меню (callback_data m:*) — не занимает экран, прокручивается вместе с сообщением.
 MENU_INLINE = [
     [{"text": BTN_CAROUSEL, "callback_data": "m:carousel"}, {"text": BTN_POST_TOPIC, "callback_data": "m:post"}],
+    [{"text": BTN_COVER, "callback_data": "m:cover"}, {"text": BTN_REGEN, "callback_data": "m:regen"}],
     [{"text": BTN_SCHEDULE, "callback_data": "m:schedule"}, {"text": BTN_CHAT, "callback_data": "m:chat"}],
     [{"text": BTN_ANALYTICS, "callback_data": "m:analytics"}, {"text": BTN_WEEKLY, "callback_data": "m:weekly"}],
-    [{"text": BTN_SENTIMENT, "callback_data": "m:sentiment"}, {"text": BTN_REGEN, "callback_data": "m:regen"}],
+    [{"text": BTN_SENTIMENT, "callback_data": "m:sentiment"}],
 ]
 
 # В режиме чата под ответами — только выход + быстрый возврат в меню.
@@ -73,6 +75,7 @@ CHAT_EXIT_INLINE = [
 BOT_COMMANDS = [
     {"command": "menu", "description": "☰ Открыть меню"},
     {"command": "carousel", "description": "🎨 Создать карусель"},
+    {"command": "cover", "description": "🖼 Картинка к тексту"},
     {"command": "post", "description": "📝 Пост на тему"},
     {"command": "schedule", "description": "📅 Расписание недели"},
     {"command": "chat", "description": "💬 Чат с Claude"},
@@ -465,6 +468,69 @@ def handle_carousel_generate(chat_id: str, topic_idx: int, db: DB, client: Anthr
 
 
 # ============================================================================
+# Картинка к тексту (обложка в hero-стиле: Claude → заголовок, Gemini → фон)
+# ============================================================================
+
+def handle_cover_request(chat_id: str, db: DB) -> None:
+    db.set_bot_state(chat_id, "awaiting_cover_text")
+    bot.send_message(
+        chat_id,
+        "🖼 <b>Картинка к тексту</b>\n\nПришли текст (идею / заголовок / тезис) — соберу обложку в фирстиле: "
+        "хук-заголовок поверх AI-фона (Gemini), как первый слайд карусели.\n\nОтмена — любая кнопка меню.",
+    )
+
+
+def _cover_progress(chat_id: str):
+    def _p(m):
+        try:
+            bot.send_chat_action(chat_id, "upload_photo")
+            bot.send_message(chat_id, m)
+        except Exception:
+            pass
+    return _p
+
+
+def _make_and_send_cover(chat_id: str, text: str, db: DB, client: Anthropic, model: str) -> None:
+    import time as _t, json as _json
+    from pathlib import Path as _Path
+    import carousel_builder as cb
+    try:
+        content = cb.generate_cover_content(text, client, model)
+        if not content:
+            bot.send_message(chat_id, "<b>Не удалось собрать обложку.</b> Попробуй другой текст.", buttons=MENU_INLINE)
+            return
+        out_dir = _Path("/opt/apps/market-intel/content_engine/visual/generated") / f"cover-{int(_t.time())}"
+        png = cb.build_cover(content, out_dir, ai_bg=True, progress=_cover_progress(chat_id))
+        bot.send_chat_action(chat_id, "upload_photo")
+        bot.send_photo(chat_id, png, caption="🖼 Обложка готова")
+        db.set_pending_publish(chat_id, "cover", _json.dumps({"png": str(png), "caption": text.strip()}, ensure_ascii=False))
+        bot.send_message(chat_id, "✅ <b>Готово к публикации.</b> Нажми, когда устроит:", buttons=publish_buttons("cover"))
+    except Exception as exc:
+        import traceback as _tb
+        bot.send_message(chat_id, f"<b>Ошибка обложки:</b>\n<code>{bot.html_escape(str(exc))}</code>", buttons=MENU_INLINE)
+        print(_tb.format_exc())
+
+
+def handle_cover_generate(chat_id: str, text: str, db: DB, client: Anthropic, model: str) -> None:
+    db.set_bot_state(chat_id, "idle")
+    bot.send_message(chat_id, "🖼 Делаю обложку: Claude → заголовок, Gemini → фон, рендер. ~40-70 сек…")
+    bot.send_chat_action(chat_id, "upload_photo")
+    _make_and_send_cover(chat_id, text, db, client, model)
+
+
+def handle_cover_regen(chat_id: str, db: DB, client: Anthropic, model: str) -> None:
+    import json as _json
+    pending = db.get_pending_publish(chat_id)
+    if not pending or pending.get("kind") != "cover":
+        bot.send_message(chat_id, "<b>Нет исходного текста.</b> Нажми «🖼 Картинка к тексту» заново.", buttons=MENU_INLINE)
+        return
+    text = _json.loads(pending["payload"]).get("caption", "")
+    bot.send_message(chat_id, "🔄 Делаю другой вариант обложки…")
+    bot.send_chat_action(chat_id, "upload_photo")
+    _make_and_send_cover(chat_id, text, db, client, model)
+
+
+# ============================================================================
 # Публикация в канал (1 тап)
 # ============================================================================
 
@@ -492,6 +558,18 @@ def handle_publish(chat_id: str, db: DB) -> None:
         data = _json.loads(pending["payload"])
         if pending["kind"] == "post":
             bot.send_message(channel, data["body"])
+        elif pending["kind"] == "cover":
+            png = Path(data.get("png", ""))
+            if not png.exists():
+                bot.send_message(chat_id, "<b>Файл обложки не найден.</b> Сгенерируй заново.", buttons=MENU_INLINE)
+                return
+            cap = (data.get("caption", "") or "").strip()
+            if cap and len(cap) <= 1024:
+                bot.send_photo(channel, png, caption=cap)
+            else:
+                bot.send_photo(channel, png)
+                if cap:
+                    bot.send_message(channel, cap)
         elif pending["kind"] == "carousel":
             pngs = [Path(p) for p in data.get("pngs", []) if Path(p).exists()]
             if not pngs:
@@ -522,6 +600,8 @@ def _dispatch_menu_action(action: str, chat_id: str, db: DB, client: Anthropic, 
         handle_start(chat_id, db)
     elif action == "carousel":
         handle_carousel_request(chat_id, db, client, model)
+    elif action == "cover":
+        handle_cover_request(chat_id, db)
     elif action == "post":
         handle_post_topic_request(chat_id, db)
     elif action == "regen":
@@ -550,7 +630,7 @@ def _dispatch_menu_action(action: str, chat_id: str, db: DB, client: Anthropic, 
 # Slash-команды → действия меню (для нативной кнопки «Меню» Telegram)
 SLASH_TO_ACTION = {
     "/menu": "menu", "/start": "menu",
-    "/carousel": "carousel", "/post": "post", "/regen": "regen",
+    "/carousel": "carousel", "/cover": "cover", "/post": "post", "/regen": "regen",
     "/schedule": "schedule", "/chat": "chat", "/analytics": "analytics",
     "/weekly": "weekly", "/sentiment": "sentiment",
 }
@@ -584,6 +664,8 @@ def process_update(update: dict, db: DB, client: Anthropic, model: str, allowed_
                 handle_regenerate(cq_chat, db)
             elif action == "regen_carousel":
                 handle_carousel_request(cq_chat, db, client, model)
+            elif action == "regen_cover":
+                handle_cover_regen(cq_chat, db, client, model)
         elif data.startswith("m:"):
             _dispatch_menu_action(data.split(":", 1)[1], cq_chat, db, client, model)
         return
@@ -647,6 +729,8 @@ def process_update(update: dict, db: DB, client: Anthropic, model: str, allowed_
         handle_query_answer(chat_id, text, db, client, model)
     elif state == "awaiting_topic":
         handle_post_topic_answer(chat_id, text, db)
+    elif state == "awaiting_cover_text":
+        handle_cover_generate(chat_id, text, db, client, model)
     elif state == "chatting":
         handle_chat_message(chat_id, text, db, client, model)
     else:

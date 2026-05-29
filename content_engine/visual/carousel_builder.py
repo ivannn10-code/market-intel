@@ -215,6 +215,28 @@ def slide_hero(idx: int, total: int, h: dict, bg_file: str | None) -> str:
     return _doc("overlay-bottom", bg_file, inner, f"{idx:02d}")
 
 
+def slide_cover(h: dict, bg_file: str | None) -> str:
+    """Самостоятельная обложка из текста — hero-стиль, БЕЗ крупной цифры (не слайд карусели)."""
+    quote = ""
+    if h.get("quote"):
+        quote = f'<div class="hero-quote-section"><div class="hero-quote">{fmt(h["quote"])}</div></div>'
+    stat = ""
+    st = h.get("stat") or {}
+    if st.get("value"):
+        stat = (f'<div class="hero-stat"><span class="v">{esc(st["value"])}</span>'
+                f'<span class="l">{esc(st.get("label",""))}</span></div>')
+    inner = (
+        _top_row(1, 1)
+        + quote
+        + '<div class="hero-body">'
+        + f'<div class="hero-tag-row">{_mini_tag(h.get("label",""))}</div>'
+        + f'<div class="hero-headline">{fmt(h["title"])}</div>'
+        + stat
+        + '</div>'
+    )
+    return _doc("overlay-bottom", bg_file, inner, "")  # huge="" → без фоновой цифры
+
+
 def _layout_data(s: dict) -> str:
     rows = []
     for r in s.get("rows", []):
@@ -578,6 +600,79 @@ def build_carousel(content: dict, out_dir: Path, ai_bg: bool = True, progress=No
         render_html(hp, pp)
         pngs.append(pp)
     return pngs
+
+
+# ── Обложка из произвольного текста (Claude → hero-структура → Gemini-фон) ────
+COVER_TOOL = {
+    "name": "make_cover",
+    "description": "Преврати присланный текст в обложку-картинку (hero) премиум-эксперта по недвижимости.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "label": {"type": "string", "description": "Мини-тег категории КАПСОМ, 2-4 слова"},
+            "title": {"type": "string", "description": "Хук-заголовок (PT Serif). *слово* = оранжевый акцент, _слово_ = приглушённый курсив. До ~90 знаков"},
+            "quote": {"type": "string", "description": "Опц. короткая цитата-эпиграф (1-2 строки)"},
+            "stat": {"type": "object", "properties": {"label": {"type": "string"}, "value": {"type": "string"}},
+                     "description": "Опц. цифра-якорь, ТОЛЬКО если число есть в тексте"},
+            "bg_hint": {"type": "string", "description": "Англ. описание AI-фона: обобщённая премиум-сцена (интерьер/материалы/свет/предметы). БЕЗ реальных зданий, лиц, текста"},
+        },
+        "required": ["label", "title", "bg_hint"],
+    },
+}
+
+COVER_SYSTEM = """Ты — связка copywriter + carousel-designer премиум-эксперта по недвижимости Москвы (Иван Гладышев, бизнес-класс + коммерция А, 12 лет).
+
+Преврати присланный текст в ОБЛОЖКУ-картинку в стиле первого слайда карусели: мощный хук-заголовок поверх премиум-фото.
+
+Правила:
+- Заголовок (title) — ёмкий, цепляющий, по сути текста. Можно выделить *1-2 слова* (оранжевый) и _слово_ (курсив). Без инфоцыганщины.
+- БАН-СЛОВА: премиум/элитный/эксклюзив, успей/только сегодня, гарантия доходности, доверьтесь профессионалу, индивидуальный подход, инсайдер, 100% юридически чисто, массовое «рекомендую».
+- FACT-CHECK: НЕ выдумывай цифры. stat заполняй ТОЛЬКО если число явно есть в присланном тексте.
+- bg_hint (англ.): обобщённая премиум-сцена под смысл текста. СТРОГО без реальных узнаваемых зданий, без лиц, без текста на картинке.
+- label — короткий КАПС-тег рубрики/темы."""
+
+
+def generate_cover_content(text: str, client: anthropic.Anthropic, model: str) -> dict | None:
+    resp = client.messages.create(
+        model=model, max_tokens=900,
+        system=COVER_SYSTEM,
+        tools=[COVER_TOOL], tool_choice={"type": "tool", "name": "make_cover"},
+        messages=[{"role": "user", "content": f"Текст для обложки:\n\n{text[:3000]}\n\nСделай обложку."}],
+    )
+    for b in resp.content:
+        if getattr(b, "type", None) == "tool_use":
+            return b.input
+    return None
+
+
+def build_cover(content: dict, out_dir: Path, ai_bg: bool = True, progress=None) -> Path:
+    """Генерит AI-фон (Gemini) + рендерит обложку (hero-стиль) в PNG. Возвращает путь к PNG."""
+    from render_card import render_html
+    out_dir = Path(out_dir)
+    html_dir = out_dir / "html"; png_dir = out_dir / "png"
+    html_dir.mkdir(parents=True, exist_ok=True); png_dir.mkdir(parents=True, exist_ok=True)
+
+    bg_file = None
+    if ai_bg:
+        try:
+            from ai_bg import is_available
+            if is_available():
+                if progress:
+                    progress("🎨 Генерю AI-фон обложки…")
+                p = _gen_one_bg(content.get("bg_hint", "minimalist premium interior, soft light"),
+                                html_dir / "bg-cover.png")
+                if p and p.exists():
+                    bg_file = p.name
+        except Exception as exc:
+            print(f"[cover] AI-фон не сгенерён: {exc}")
+
+    if progress:
+        progress("🖼 Рендерю обложку…")
+    html = slide_cover(content, bg_file)
+    hp = html_dir / "cover.html"; hp.write_text(html, encoding="utf-8")
+    pp = png_dir / "cover.png"
+    render_html(hp, pp)
+    return pp
 
 
 def caption_md(content: dict) -> str:
