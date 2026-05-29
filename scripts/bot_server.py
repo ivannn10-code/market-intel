@@ -232,7 +232,7 @@ def handle_post_topic_answer(chat_id: str, topic: str, db: DB) -> None:
         post_path = _extract_post_path(result.stdout)
         if post_path and post_path.exists():
             db.save_last_post(chat_id, str(post_path), "method", topic)
-            _send_draft(chat_id, post_path)
+            _send_draft(chat_id, post_path, db)
         else:
             bot.send_message(chat_id, f"<b>Не нашёл файл драфта.</b>\n<code>{result.stdout[-800:]}</code>", buttons=MENU_INLINE)
     except subprocess.TimeoutExpired:
@@ -266,7 +266,7 @@ def _extract_post_path(stdout: str) -> Path | None:
     return None
 
 
-def _send_draft(chat_id: str, draft_path: Path):
+def _send_draft(chat_id: str, draft_path: Path, db: "DB | None" = None):
     """Шлёт draft .md файл — frontmatter скрывает, тело отправляет в <pre>."""
     content = draft_path.read_text(encoding="utf-8")
     # Срезаем YAML frontmatter
@@ -275,8 +275,14 @@ def _send_draft(chat_id: str, draft_path: Path):
         body = parts[2].strip() if len(parts) >= 3 else content
     else:
         body = content
-    # Отправляем тело в <pre>-блоке для one-tap copy
-    bot.send_message(chat_id, f"📄 <b>Пост готов</b> — нажми чтобы скопировать:\n\n<pre>{bot.html_escape(body)}</pre>", buttons=MENU_INLINE)
+    # Сохраняем как «ожидает публикации» + кнопки публикации в канал
+    if db is not None:
+        import json as _json
+        db.set_pending_publish(chat_id, "post", _json.dumps({"body": body}, ensure_ascii=False))
+        kb = publish_buttons("post")
+    else:
+        kb = MENU_INLINE
+    bot.send_message(chat_id, f"📄 <b>Пост готов</b> — нажми чтобы скопировать:\n\n<pre>{bot.html_escape(body)}</pre>", buttons=kb)
 
 
 def handle_regenerate(chat_id: str, db: DB) -> None:
@@ -318,7 +324,7 @@ def handle_regenerate(chat_id: str, db: DB) -> None:
         post_path = _extract_post_path(result.stdout)
         if post_path and post_path.exists():
             db.save_last_post(chat_id, str(post_path), rubric, topic)
-            _send_draft(chat_id, post_path)
+            _send_draft(chat_id, post_path, db)
         else:
             bot.send_message(chat_id, "<b>Драфт не найден после перегенерации.</b>", buttons=MENU_INLINE)
     except Exception as exc:
@@ -443,11 +449,67 @@ def handle_carousel_generate(chat_id: str, topic_idx: int, db: DB, client: Anthr
         bot.send_media_group(chat_id, pngs, caption=f"🎨 {topic} · {len(pngs)} слайдов")
         # Подпись + хэштеги + первый коммент в <pre> для копирования
         cap = cb.caption_md(content)
-        bot.send_message(chat_id, f"📝 <b>Подпись + хэштеги + первый коммент</b> (нажми чтобы скопировать):\n\n<pre>{bot.html_escape(cap)}</pre>", buttons=MENU_INLINE)
+        # Сохраняем как «ожидает публикации» (PNG + подпись) + кнопки публикации в канал
+        db.set_pending_publish(chat_id, "carousel", _json.dumps({
+            "pngs": [str(p) for p in pngs],
+            "caption": content.get("caption", ""),
+            "hashtags": content.get("hashtags", []),
+            "first_comment": content.get("first_comment", ""),
+            "topic": topic,
+        }, ensure_ascii=False))
+        bot.send_message(chat_id, f"📝 <b>Подпись + хэштеги + первый коммент</b> (нажми чтобы скопировать):\n\n<pre>{bot.html_escape(cap)}</pre>", buttons=publish_buttons("carousel"))
     except Exception as exc:
         import traceback as _tb
         bot.send_message(chat_id, f"<b>Ошибка генерации карусели:</b>\n<code>{bot.html_escape(str(exc))}</code>", buttons=MENU_INLINE)
         print(_tb.format_exc())
+
+
+# ============================================================================
+# Публикация в канал (1 тап)
+# ============================================================================
+
+def publish_buttons(kind: str) -> list[list[dict]]:
+    """Кнопки под готовым контентом: опубликовать / другой вариант / меню."""
+    return [
+        [{"text": "✅ Опубликовать в канал", "callback_data": "pub:go"}],
+        [{"text": "🔄 Другой вариант", "callback_data": f"pub:regen_{kind}"},
+         {"text": "☰ Меню", "callback_data": "m:menu"}],
+    ]
+
+
+def handle_publish(chat_id: str, db: DB) -> None:
+    """Публикует «ожидающий» контент (пост/карусель) в TG-канал."""
+    import json as _json
+    channel = config.env("TELEGRAM_CHANNEL_ID", "")
+    if not channel:
+        bot.send_message(chat_id, "<b>Канал не настроен.</b> Добавь TELEGRAM_CHANNEL_ID в .env и перезапусти бота.", buttons=MENU_INLINE)
+        return
+    pending = db.get_pending_publish(chat_id)
+    if not pending:
+        bot.send_message(chat_id, "<b>Нечего публиковать.</b> Сначала сгенерируй пост или карусель.", buttons=MENU_INLINE)
+        return
+    try:
+        data = _json.loads(pending["payload"])
+        if pending["kind"] == "post":
+            bot.send_message(channel, data["body"])
+        elif pending["kind"] == "carousel":
+            pngs = [Path(p) for p in data.get("pngs", []) if Path(p).exists()]
+            if not pngs:
+                bot.send_message(chat_id, "<b>Файлы карусели не найдены</b> (могли быть очищены). Сгенерируй заново.", buttons=MENU_INLINE)
+                return
+            cap = (data.get("caption", "") or "").strip()
+            tags = " ".join(data.get("hashtags", []))
+            full = (cap + ("\n\n" + tags if tags else "")).strip()
+            if full and len(full) <= 1024:
+                bot.send_media_group(channel, pngs, caption=full)
+            else:
+                bot.send_media_group(channel, pngs)
+                if full:
+                    bot.send_message(channel, full)
+        db.clear_pending_publish(chat_id)
+        bot.send_message(chat_id, f"✅ <b>Опубликовано в канал</b> {bot.html_escape(channel)}.", buttons=MENU_INLINE)
+    except Exception as exc:
+        bot.send_message(chat_id, f"<b>Ошибка публикации:</b>\n<code>{bot.html_escape(str(exc))}</code>", buttons=MENU_INLINE)
 
 
 # ============================================================================
@@ -513,6 +575,15 @@ def process_update(update: dict, db: DB, client: Anthropic, model: str, allowed_
                 handle_carousel_request(cq_chat, db, client, model)
             elif choice.isdigit():
                 handle_carousel_generate(cq_chat, int(choice), db, client, model)
+        elif data.startswith("pub:"):
+            action = data.split(":", 1)[1]
+            if action == "go":
+                handle_publish(cq_chat, db)
+            elif action == "regen_post":
+                db.set_bot_state(cq_chat, "idle")
+                handle_regenerate(cq_chat, db)
+            elif action == "regen_carousel":
+                handle_carousel_request(cq_chat, db, client, model)
         elif data.startswith("m:"):
             _dispatch_menu_action(data.split(":", 1)[1], cq_chat, db, client, model)
         return

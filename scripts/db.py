@@ -127,6 +127,13 @@ CREATE TABLE IF NOT EXISTS bot_last_post (
     topic       TEXT,
     created_at  TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS bot_pending_publish (
+    chat_id     TEXT PRIMARY KEY,
+    kind        TEXT NOT NULL,      -- 'post' | 'carousel'
+    payload     TEXT NOT NULL,      -- JSON
+    created_at  TEXT NOT NULL
+);
 """
 
 
@@ -371,6 +378,27 @@ class DB:
         )
         row = cur.fetchone()
         return dict(row) if row else None
+
+    # === Pending publish (ожидает публикации в канал) ===
+
+    def set_pending_publish(self, chat_id: str, kind: str, payload: str):
+        self.conn.execute(
+            """INSERT INTO bot_pending_publish (chat_id, kind, payload, created_at)
+               VALUES (?, ?, ?, ?)
+               ON CONFLICT(chat_id) DO UPDATE SET
+                 kind=excluded.kind, payload=excluded.payload, created_at=excluded.created_at""",
+            (chat_id, kind, payload, datetime.utcnow().isoformat()),
+        )
+
+    def get_pending_publish(self, chat_id: str) -> dict | None:
+        cur = self.conn.execute(
+            "SELECT kind, payload, created_at FROM bot_pending_publish WHERE chat_id=?", (chat_id,)
+        )
+        row = cur.fetchone()
+        return dict(row) if row else None
+
+    def clear_pending_publish(self, chat_id: str):
+        self.conn.execute("DELETE FROM bot_pending_publish WHERE chat_id=?", (chat_id,))
 
     # === Bot states ===
 
