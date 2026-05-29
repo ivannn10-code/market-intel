@@ -83,6 +83,19 @@ RUBRIC_DELIVERY_ORDER = [
     "number", "voice", "poll",                      # лёгкие
 ]
 
+# Рубрики, которые бот может опубликовать в канал «в 1 тап» (готовый текст/карусель).
+# voice = сценарий для записи Иваном, poll = опрос создаётся вручную — у них кнопки нет.
+PUBLISHABLE_RUBRICS = {"review", "number", "compare", "method", "digest", "lot_commercial", "lot_residential"}
+
+
+def _publish_buttons(kind: str) -> list[list[dict]]:
+    """Inline-кнопки публикации (те же, что в bot_server — обрабатывает бот-сервис через общую БД)."""
+    return [
+        [{"text": "✅ Опубликовать в канал", "callback_data": "pub:go"}],
+        [{"text": "🔄 Другой вариант", "callback_data": f"pub:regen_{kind}"},
+         {"text": "☰ Меню", "callback_data": "m:menu"}],
+    ]
+
 # --- логирование ----------------------------------------------------------
 
 def _log_path(today: dt.date) -> Path:
@@ -378,8 +391,35 @@ def deliver(date: dt.date, post_path: Path, *, dry_run: bool = False) -> dict[st
             f"Проверь, что handle в посте корректный (@IVAN_SUNSIDE → твой реальный).",
         )
 
-    # 7) финал
-    bot.send_message(chat_id, "✅ <b>Пакет дня доставлен.</b>")
+    # 7) финал — кнопка публикации в 1 тап (для публикуемых рубрик)
+    if rubric in PUBLISHABLE_RUBRICS:
+        try:
+            from db import DB
+            _db = DB(config.DB_PATH)
+            # чтобы «🔄 Другой вариант» (перегенерация по рубрике) знал контекст
+            _db.save_last_post(chat_id, str(post_path), rubric, "")
+            # карусель или текст?
+            slides = []
+            if is_carousel and image_rel:
+                ip = (HERE / image_rel).resolve()
+                if ip.exists() and ip.is_dir():
+                    slides = sorted(ip.glob("slide-*.png"))
+            if slides and 2 <= len(slides) <= 10:
+                payload = json.dumps({"pngs": [str(s) for s in slides], "caption": body.strip(),
+                                      "hashtags": [], "first_comment": ""}, ensure_ascii=False)
+                _db.set_pending_publish(chat_id, "carousel", payload)
+                kind = "carousel"
+            else:
+                payload = json.dumps({"body": body.strip()}, ensure_ascii=False)
+                _db.set_pending_publish(chat_id, "post", payload)
+                kind = "post"
+            bot.send_message(chat_id, "✅ <b>Готово к публикации.</b> Нажми, когда устроит:", buttons=_publish_buttons(kind))
+            log(date, f"publish buttons attached ({kind})")
+        except Exception as exc:
+            log(date, f"WARN publish buttons failed: {exc}")
+            bot.send_message(chat_id, "✅ <b>Пакет дня доставлен.</b>")
+    else:
+        bot.send_message(chat_id, "✅ <b>Пакет дня доставлен.</b> <i>(голосовое/опрос публикуешь вручную)</i>")
     log(date, f"delivery OK: {json.dumps(summary, ensure_ascii=False)}")
 
     return summary
