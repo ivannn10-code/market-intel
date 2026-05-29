@@ -56,16 +56,29 @@ BTN_WEEKLY = "📊 Сводка недели"
 BTN_SENTIMENT = "🌡 Температура рынка"
 BTN_CHAT_EXIT = "✓ Завершить чат"
 
-KEYBOARD = [
-    [BTN_POST_TOPIC, BTN_REGEN],
-    [BTN_CAROUSEL],
-    [BTN_SCHEDULE, BTN_CHAT],
-    [BTN_ANALYTICS],
-    [BTN_WEEKLY, BTN_SENTIMENT],
+# Inline-меню (callback_data m:*) — не занимает экран, прокручивается вместе с сообщением.
+MENU_INLINE = [
+    [{"text": BTN_CAROUSEL, "callback_data": "m:carousel"}, {"text": BTN_POST_TOPIC, "callback_data": "m:post"}],
+    [{"text": BTN_SCHEDULE, "callback_data": "m:schedule"}, {"text": BTN_CHAT, "callback_data": "m:chat"}],
+    [{"text": BTN_ANALYTICS, "callback_data": "m:analytics"}, {"text": BTN_WEEKLY, "callback_data": "m:weekly"}],
+    [{"text": BTN_SENTIMENT, "callback_data": "m:sentiment"}, {"text": BTN_REGEN, "callback_data": "m:regen"}],
 ]
 
-KEYBOARD_CHAT = [
-    [BTN_CHAT_EXIT],
+# В режиме чата под ответами — только выход + быстрый возврат в меню.
+CHAT_EXIT_INLINE = [
+    [{"text": BTN_CHAT_EXIT, "callback_data": "m:chat_exit"}, {"text": "☰ Меню", "callback_data": "m:menu"}],
+]
+
+# Команды для нативной кнопки «Меню» (слева от поля ввода).
+BOT_COMMANDS = [
+    {"command": "menu", "description": "☰ Открыть меню"},
+    {"command": "carousel", "description": "🎨 Создать карусель"},
+    {"command": "post", "description": "📝 Пост на тему"},
+    {"command": "schedule", "description": "📅 Расписание недели"},
+    {"command": "chat", "description": "💬 Чат с Claude"},
+    {"command": "analytics", "description": "🔍 Аналитика рынка"},
+    {"command": "weekly", "description": "📊 Сводка недели"},
+    {"command": "sentiment", "description": "🌡 Температура рынка"},
 ]
 
 
@@ -92,7 +105,7 @@ VENV_PY = PROJECT_ROOT / "venv" / "bin" / "python"
 
 def handle_start(chat_id: str, db: DB) -> None:
     db.set_bot_state(chat_id, "idle")
-    bot.send_message(chat_id, WELCOME_TEXT, reply_keyboard=KEYBOARD)
+    bot.send_message(chat_id, WELCOME_TEXT, buttons=MENU_INLINE)
 
 
 def handle_weekly_digest(chat_id: str, db: DB, client: Anthropic, model: str) -> None:
@@ -111,9 +124,9 @@ def handle_weekly_digest(chat_id: str, db: DB, client: Anthropic, model: str) ->
             date_range = f"{start.strftime('%d.%m')}—{today.strftime('%d.%m.%Y')}"
             ctx = weekly_digest.build_context_for_llm(by_topic)
             text = weekly_digest.call_llm(client, model, ctx, date_range)
-        bot.send_message(chat_id, text, reply_keyboard=KEYBOARD)
+        bot.send_message(chat_id, text, buttons=MENU_INLINE)
     except Exception as exc:
-        bot.send_message(chat_id, f"<b>Ошибка:</b>\n<code>{bot.html_escape(str(exc))}</code>", reply_keyboard=KEYBOARD)
+        bot.send_message(chat_id, f"<b>Ошибка:</b>\n<code>{bot.html_escape(str(exc))}</code>", buttons=MENU_INLINE)
 
 
 def handle_sentiment(chat_id: str, db: DB, client: Anthropic, model: str) -> None:
@@ -143,9 +156,9 @@ def handle_sentiment(chat_id: str, db: DB, client: Anthropic, model: str) -> Non
                 messages=[{"role": "user", "content": user_msg}],
             )
             text = "".join(b.text for b in resp.content if hasattr(b, "text"))
-        bot.send_message(chat_id, text, reply_keyboard=KEYBOARD)
+        bot.send_message(chat_id, text, buttons=MENU_INLINE)
     except Exception as exc:
-        bot.send_message(chat_id, f"<b>Ошибка sentiment:</b>\n<code>{bot.html_escape(str(exc))}</code>", reply_keyboard=KEYBOARD)
+        bot.send_message(chat_id, f"<b>Ошибка sentiment:</b>\n<code>{bot.html_escape(str(exc))}</code>", buttons=MENU_INLINE)
 
 
 def handle_analytics_request(chat_id: str, db: DB) -> None:
@@ -168,9 +181,9 @@ def handle_query_answer(chat_id: str, query: str, db: DB, client: Anthropic, mod
     bot.send_chat_action(chat_id, "typing")
     try:
         answer = analytics.answer_question(db, client, model, query)
-        bot.send_message(chat_id, answer, reply_keyboard=KEYBOARD)
+        bot.send_message(chat_id, answer, buttons=MENU_INLINE)
     except Exception as exc:
-        bot.send_message(chat_id, f"<b>Ошибка:</b>\n<code>{bot.html_escape(str(exc))}</code>", reply_keyboard=KEYBOARD)
+        bot.send_message(chat_id, f"<b>Ошибка:</b>\n<code>{bot.html_escape(str(exc))}</code>", buttons=MENU_INLINE)
     db.set_bot_state(chat_id, "idle")
 
 
@@ -211,7 +224,7 @@ def handle_post_topic_answer(chat_id: str, topic: str, db: DB) -> None:
             env={**__import__('os').environ, "PYTHONIOENCODING": "utf-8"},
         )
         if result.returncode != 0:
-            bot.send_message(chat_id, f"<b>Генератор вернул ошибку:</b>\n<code>{bot.html_escape(result.stderr[:1500])}</code>", reply_keyboard=KEYBOARD)
+            bot.send_message(chat_id, f"<b>Генератор вернул ошибку:</b>\n<code>{bot.html_escape(result.stderr[:1500])}</code>", buttons=MENU_INLINE)
             db.set_bot_state(chat_id, "idle")
             return
 
@@ -221,11 +234,11 @@ def handle_post_topic_answer(chat_id: str, topic: str, db: DB) -> None:
             db.save_last_post(chat_id, str(post_path), "method", topic)
             _send_draft(chat_id, post_path)
         else:
-            bot.send_message(chat_id, f"<b>Не нашёл файл драфта.</b>\n<code>{result.stdout[-800:]}</code>", reply_keyboard=KEYBOARD)
+            bot.send_message(chat_id, f"<b>Не нашёл файл драфта.</b>\n<code>{result.stdout[-800:]}</code>", buttons=MENU_INLINE)
     except subprocess.TimeoutExpired:
-        bot.send_message(chat_id, "<b>Таймаут генерации (120с).</b> Попробуй снова.", reply_keyboard=KEYBOARD)
+        bot.send_message(chat_id, "<b>Таймаут генерации (120с).</b> Попробуй снова.", buttons=MENU_INLINE)
     except Exception as exc:
-        bot.send_message(chat_id, f"<b>Ошибка:</b>\n<code>{bot.html_escape(str(exc))}</code>", reply_keyboard=KEYBOARD)
+        bot.send_message(chat_id, f"<b>Ошибка:</b>\n<code>{bot.html_escape(str(exc))}</code>", buttons=MENU_INLINE)
 
     db.set_bot_state(chat_id, "idle")
 
@@ -263,13 +276,13 @@ def _send_draft(chat_id: str, draft_path: Path):
     else:
         body = content
     # Отправляем тело в <pre>-блоке для one-tap copy
-    bot.send_message(chat_id, f"📄 <b>Пост готов</b> — нажми чтобы скопировать:\n\n<pre>{bot.html_escape(body)}</pre>", reply_keyboard=KEYBOARD)
+    bot.send_message(chat_id, f"📄 <b>Пост готов</b> — нажми чтобы скопировать:\n\n<pre>{bot.html_escape(body)}</pre>", buttons=MENU_INLINE)
 
 
 def handle_regenerate(chat_id: str, db: DB) -> None:
     last = db.get_last_post(chat_id)
     if not last:
-        bot.send_message(chat_id, "<b>Нечего перегенерировать.</b>\nСначала запроси пост через «📝 Пост на тему» или дождись утренней автогенерации.", reply_keyboard=KEYBOARD)
+        bot.send_message(chat_id, "<b>Нечего перегенерировать.</b>\nСначала запроси пост через «📝 Пост на тему» или дождись утренней автогенерации.", buttons=MENU_INLINE)
         return
 
     rubric = last.get("rubric") or "method"
@@ -300,23 +313,23 @@ def handle_regenerate(chat_id: str, db: DB) -> None:
             env={**__import__('os').environ, "PYTHONIOENCODING": "utf-8"},
         )
         if result.returncode != 0:
-            bot.send_message(chat_id, f"<b>Ошибка перегенерации:</b>\n<code>{bot.html_escape(result.stderr[:1500])}</code>", reply_keyboard=KEYBOARD)
+            bot.send_message(chat_id, f"<b>Ошибка перегенерации:</b>\n<code>{bot.html_escape(result.stderr[:1500])}</code>", buttons=MENU_INLINE)
             return
         post_path = _extract_post_path(result.stdout)
         if post_path and post_path.exists():
             db.save_last_post(chat_id, str(post_path), rubric, topic)
             _send_draft(chat_id, post_path)
         else:
-            bot.send_message(chat_id, "<b>Драфт не найден после перегенерации.</b>", reply_keyboard=KEYBOARD)
+            bot.send_message(chat_id, "<b>Драфт не найден после перегенерации.</b>", buttons=MENU_INLINE)
     except Exception as exc:
-        bot.send_message(chat_id, f"<b>Ошибка:</b>\n<code>{bot.html_escape(str(exc))}</code>", reply_keyboard=KEYBOARD)
+        bot.send_message(chat_id, f"<b>Ошибка:</b>\n<code>{bot.html_escape(str(exc))}</code>", buttons=MENU_INLINE)
 
 
 # === Расписание недели ===
 
 def handle_schedule(chat_id: str, db: DB) -> None:
     text, _actions = weekly_schedule.build_schedule_overview()
-    bot.send_message(chat_id, text, reply_keyboard=KEYBOARD)
+    bot.send_message(chat_id, text, buttons=MENU_INLINE)
 
 
 # === Чат с Claude ===
@@ -333,7 +346,7 @@ def handle_chat_enter(chat_id: str, db: DB) -> None:
         "• Историю нашего диалога\n\n"
         "Можешь просить меня что угодно: написать пост, разобрать тему, накидать идей, "
         "ответить на вопрос клиента, сравнить ЖК. Спрашивай.",
-        reply_keyboard=KEYBOARD_CHAT,
+        buttons=CHAT_EXIT_INLINE,
     )
 
 
@@ -341,17 +354,17 @@ def handle_chat_message(chat_id: str, user_msg: str, db: DB, client: Anthropic, 
     bot.send_chat_action(chat_id, "typing")
     try:
         reply = chat.reply_in_chat(db, client, model, chat_id, user_msg)
-        bot.send_message(chat_id, reply, reply_keyboard=KEYBOARD_CHAT)
+        bot.send_message(chat_id, reply, buttons=CHAT_EXIT_INLINE)
     except Exception as exc:
         bot.send_message(
             chat_id, f"<b>Ошибка чата:</b>\n<code>{bot.html_escape(str(exc))}</code>",
-            reply_keyboard=KEYBOARD_CHAT,
+            buttons=CHAT_EXIT_INLINE,
         )
 
 
 def handle_chat_exit(chat_id: str, db: DB) -> None:
     db.set_bot_state(chat_id, "idle")
-    bot.send_message(chat_id, "✓ Чат завершён. История сохранена.", reply_keyboard=KEYBOARD)
+    bot.send_message(chat_id, "✓ Чат завершён. История сохранена.", buttons=MENU_INLINE)
 
 
 # === Создать карусель ===
@@ -368,7 +381,7 @@ def handle_carousel_request(chat_id: str, db: DB, client: Anthropic, model: str)
         facts = cb.fetch_recent_facts(db, days=7)
         topics = cb.propose_topics(facts, client, model)
         if not topics or len(topics) < 3:
-            bot.send_message(chat_id, "<b>Не удалось подобрать темы.</b> Попробуй ещё раз.", reply_keyboard=KEYBOARD)
+            bot.send_message(chat_id, "<b>Не удалось подобрать темы.</b> Попробуй ещё раз.", buttons=MENU_INLINE)
             return
         # Сохраняем темы в state payload
         db.set_bot_state(chat_id, "carousel_choice", _json.dumps(topics, ensure_ascii=False))
@@ -383,7 +396,7 @@ def handle_carousel_request(chat_id: str, db: DB, client: Anthropic, model: str)
         ]
         bot.send_message(chat_id, "\n".join(lines), buttons=buttons)
     except Exception as exc:
-        bot.send_message(chat_id, f"<b>Ошибка:</b>\n<code>{bot.html_escape(str(exc))}</code>", reply_keyboard=KEYBOARD)
+        bot.send_message(chat_id, f"<b>Ошибка:</b>\n<code>{bot.html_escape(str(exc))}</code>", buttons=MENU_INLINE)
         db.set_bot_state(chat_id, "idle")
 
 
@@ -395,11 +408,11 @@ def handle_carousel_generate(chat_id: str, topic_idx: int, db: DB, client: Anthr
 
     state, payload = db.get_bot_state(chat_id)
     if state != "carousel_choice" or not payload:
-        bot.send_message(chat_id, "Сессия выбора истекла. Нажми «🎨 Создать карусель» заново.", reply_keyboard=KEYBOARD)
+        bot.send_message(chat_id, "Сессия выбора истекла. Нажми «🎨 Создать карусель» заново.", buttons=MENU_INLINE)
         return
     topics = _json.loads(payload)
     if topic_idx >= len(topics):
-        bot.send_message(chat_id, "Тема не найдена.", reply_keyboard=KEYBOARD)
+        bot.send_message(chat_id, "Тема не найдена.", buttons=MENU_INLINE)
         return
 
     topic = topics[topic_idx]["title"]
@@ -418,23 +431,67 @@ def handle_carousel_generate(chat_id: str, topic_idx: int, db: DB, client: Anthr
         facts = cb.fetch_recent_facts(db, days=7)
         content = cb.generate_carousel_content(topic, facts, client, model)
         if not content:
-            bot.send_message(chat_id, "<b>Claude не вернул структуру карусели.</b> Попробуй снова.", reply_keyboard=KEYBOARD)
+            bot.send_message(chat_id, "<b>Claude не вернул структуру карусели.</b> Попробуй снова.", buttons=MENU_INLINE)
             return
         import time as _t
         out_dir = _Path("/opt/apps/market-intel/content_engine/visual/generated") / f"carousel-{int(_t.time())}"
         pngs = cb.build_carousel(content, out_dir, ai_bg=True, progress=_progress)
         if not (2 <= len(pngs) <= 10):
-            bot.send_message(chat_id, f"<b>Нестандартное число слайдов: {len(pngs)}</b>", reply_keyboard=KEYBOARD)
+            bot.send_message(chat_id, f"<b>Нестандартное число слайдов: {len(pngs)}</b>", buttons=MENU_INLINE)
             return
         bot.send_chat_action(chat_id, "upload_photo")
         bot.send_media_group(chat_id, pngs, caption=f"🎨 {topic} · {len(pngs)} слайдов")
         # Подпись + хэштеги + первый коммент в <pre> для копирования
         cap = cb.caption_md(content)
-        bot.send_message(chat_id, f"📝 <b>Подпись + хэштеги + первый коммент</b> (нажми чтобы скопировать):\n\n<pre>{bot.html_escape(cap)}</pre>", reply_keyboard=KEYBOARD)
+        bot.send_message(chat_id, f"📝 <b>Подпись + хэштеги + первый коммент</b> (нажми чтобы скопировать):\n\n<pre>{bot.html_escape(cap)}</pre>", buttons=MENU_INLINE)
     except Exception as exc:
         import traceback as _tb
-        bot.send_message(chat_id, f"<b>Ошибка генерации карусели:</b>\n<code>{bot.html_escape(str(exc))}</code>", reply_keyboard=KEYBOARD)
+        bot.send_message(chat_id, f"<b>Ошибка генерации карусели:</b>\n<code>{bot.html_escape(str(exc))}</code>", buttons=MENU_INLINE)
         print(_tb.format_exc())
+
+
+# ============================================================================
+# Диспетчер действий меню (общий для inline-кнопок m:* и slash-команд)
+# ============================================================================
+
+def _dispatch_menu_action(action: str, chat_id: str, db: DB, client: Anthropic, model: str) -> bool:
+    """Выполняет действие меню. Возвращает True если действие распознано."""
+    if action in ("menu", "start"):
+        handle_start(chat_id, db)
+    elif action == "carousel":
+        handle_carousel_request(chat_id, db, client, model)
+    elif action == "post":
+        handle_post_topic_request(chat_id, db)
+    elif action == "regen":
+        db.set_bot_state(chat_id, "idle")
+        handle_regenerate(chat_id, db)
+    elif action == "schedule":
+        db.set_bot_state(chat_id, "idle")
+        handle_schedule(chat_id, db)
+    elif action == "chat":
+        handle_chat_enter(chat_id, db)
+    elif action == "analytics":
+        handle_analytics_request(chat_id, db)
+    elif action == "weekly":
+        db.set_bot_state(chat_id, "idle")
+        handle_weekly_digest(chat_id, db, client, model)
+    elif action == "sentiment":
+        db.set_bot_state(chat_id, "idle")
+        handle_sentiment(chat_id, db, client, model)
+    elif action == "chat_exit":
+        handle_chat_exit(chat_id, db)
+    else:
+        return False
+    return True
+
+
+# Slash-команды → действия меню (для нативной кнопки «Меню» Telegram)
+SLASH_TO_ACTION = {
+    "/menu": "menu", "/start": "menu",
+    "/carousel": "carousel", "/post": "post", "/regen": "regen",
+    "/schedule": "schedule", "/chat": "chat", "/analytics": "analytics",
+    "/weekly": "weekly", "/sentiment": "sentiment",
+}
 
 
 # ============================================================================
@@ -456,6 +513,8 @@ def process_update(update: dict, db: DB, client: Anthropic, model: str, allowed_
                 handle_carousel_request(cq_chat, db, client, model)
             elif choice.isdigit():
                 handle_carousel_generate(cq_chat, int(choice), db, client, model)
+        elif data.startswith("m:"):
+            _dispatch_menu_action(data.split(":", 1)[1], cq_chat, db, client, model)
         return
 
     msg = update.get("message") or update.get("edited_message")
@@ -472,12 +531,13 @@ def process_update(update: dict, db: DB, client: Anthropic, model: str, allowed_
 
     print(f"[bot] {chat_id} → {text[:80]}")
 
-    # Команды
-    if text in ("/start", "/menu"):
-        handle_start(chat_id, db)
+    # Slash-команды (нативная кнопка «Меню») → действия
+    cmd = text.split()[0].lower() if text.startswith("/") else ""
+    if cmd in SLASH_TO_ACTION:
+        _dispatch_menu_action(SLASH_TO_ACTION[cmd], chat_id, db, client, model)
         return
 
-    # Кнопки главного меню — сбрасывают state
+    # Текстовые кнопки (обратная совместимость со старой клавиатурой) — сбрасывают state
     if text == BTN_WEEKLY:
         db.set_bot_state(chat_id, "idle")
         handle_weekly_digest(chat_id, db, client, model)
@@ -522,7 +582,7 @@ def process_update(update: dict, db: DB, client: Anthropic, model: str, allowed_
         bot.send_message(
             chat_id,
             "Не понял. Выбери действие из меню или нажми «💬 Чат с Claude» чтобы общаться свободно.",
-            reply_keyboard=KEYBOARD,
+            buttons=MENU_INLINE,
         )
 
 
@@ -541,12 +601,23 @@ def main() -> int:
         return 2
     print(f"[bot] Запущен как @{me['result']['username']}, слушаю чат {chat_id}")
 
+    # Нативная кнопка «Меню» (слева от поля ввода) + список команд
+    bot.set_my_commands(BOT_COMMANDS)
+    bot.set_chat_menu_button_commands()
+
     db = DB(config.DB_PATH)
     offset = db.get_bot_offset()
     print(f"[bot] Стартовый offset: {offset}")
 
     try:
-        bot.send_message(chat_id, "🤖 <b>Бот перезапущен — 7 кнопок доступны.</b>\n\nНажми /menu для краткой справки.", reply_keyboard=KEYBOARD)
+        bot.send_message(
+            chat_id,
+            "🤖 <b>Бот обновлён — меню теперь компактное.</b>\n\n"
+            "Нижняя клавиатура убрана — больше не занимает экран.\n"
+            "Открыть действия: кнопка <b>☰ Меню</b> слева от поля ввода, команда /menu "
+            "или кнопки ниже. Меню также появляется под каждым результатом.",
+            buttons=MENU_INLINE,
+        )
     except Exception as exc:
         print(f"[bot] welcome failed: {exc}")
 

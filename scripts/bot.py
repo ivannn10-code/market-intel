@@ -44,6 +44,23 @@ def get_me() -> dict:
     return _get("getMe")
 
 
+def set_my_commands(commands: list[dict]) -> dict:
+    """Регистрирует список команд для нативной кнопки «Меню» (слева от поля ввода).
+    commands: [{"command": "menu", "description": "Открыть меню"}, ...]"""
+    try:
+        return _request("setMyCommands", {"commands": commands})
+    except Exception:
+        return {}
+
+
+def set_chat_menu_button_commands() -> dict:
+    """Делает нативную кнопку Menu списком команд (дефолт Telegram)."""
+    try:
+        return _request("setChatMenuButton", {"menu_button": {"type": "commands"}})
+    except Exception:
+        return {}
+
+
 def get_updates(offset: int | None = None, timeout: int = 25, allowed_updates: list[str] | None = None) -> list[dict]:
     """Long polling getUpdates."""
     params = {"timeout": timeout}
