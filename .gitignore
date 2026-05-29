@@ -26,3 +26,8 @@ _server_setup/
 # Server setup tools — могут содержать креды
 _server_setup/
 _deploy/_env_for_server.txt
+
+# Тестовые/выходные артефакты каруселей
+content_engine/visual/_smoke/
+content_engine/visual/_ai/
+content_engine/visual/generated/

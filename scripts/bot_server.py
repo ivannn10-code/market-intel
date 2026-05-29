@@ -404,8 +404,15 @@ def handle_carousel_generate(chat_id: str, topic_idx: int, db: DB, client: Anthr
 
     topic = topics[topic_idx]["title"]
     db.set_bot_state(chat_id, "idle")
-    bot.send_message(chat_id, f"🎨 Генерю карусель: <i>{bot.html_escape(topic)}</i>\nЭто 40-70 секунд (Claude пишет слайды + рендер PNG)...")
+    bot.send_message(chat_id, f"🎨 Генерю карусель: <i>{bot.html_escape(topic)}</i>\nЭто 1.5–2.5 минуты: Claude пишет слайды → AI-фоны (Gemini) → рендер PNG. Пришлю по готовности.")
     bot.send_chat_action(chat_id, "upload_photo")
+
+    def _progress(msg: str) -> None:
+        try:
+            bot.send_chat_action(chat_id, "upload_photo")
+            bot.send_message(chat_id, msg)
+        except Exception:
+            pass
 
     try:
         facts = cb.fetch_recent_facts(db, days=7)
@@ -415,7 +422,7 @@ def handle_carousel_generate(chat_id: str, topic_idx: int, db: DB, client: Anthr
             return
         import time as _t
         out_dir = _Path("/opt/apps/market-intel/content_engine/visual/generated") / f"carousel-{int(_t.time())}"
-        pngs = cb.build_carousel(content, out_dir)
+        pngs = cb.build_carousel(content, out_dir, ai_bg=True, progress=_progress)
         if not (2 <= len(pngs) <= 10):
             bot.send_message(chat_id, f"<b>Нестандартное число слайдов: {len(pngs)}</b>", reply_keyboard=KEYBOARD)
             return
