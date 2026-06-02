@@ -134,6 +134,16 @@ CREATE TABLE IF NOT EXISTS bot_pending_publish (
     payload     TEXT NOT NULL,      -- JSON
     created_at  TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS bot_threads_log (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    sent_at     TEXT NOT NULL,
+    format      INTEGER NOT NULL,   -- 1..6
+    audience    TEXT NOT NULL,
+    with_cta    INTEGER NOT NULL DEFAULT 0,
+    text        TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_threads_sent ON bot_threads_log(sent_at);
 """
 
 
