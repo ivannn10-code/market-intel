@@ -144,7 +144,7 @@ async def main() -> int:
     run_id = db.start_run()
 
     channels = db.conn.execute(
-        "SELECT id, tg_id, username, title FROM channels ORDER BY title"
+        "SELECT id, tg_id, username, title FROM channels WHERE is_active=1 ORDER BY title"
     ).fetchall()
     if not channels:
         print("✗ В БД нет каналов. Сначала запусти init.py")

@@ -119,6 +119,7 @@ async def main() -> int:
     db = DB(config.DB_PATH)
     sources_out: list[dict] = []
     total_channels = 0
+    active_tg_ids: list[int] = []  # авто-синк: что реально сейчас в папках
 
     for folder in folders:
         print(f"[init] Папка: {folder['title']} ({len(folder['peers'])} элементов)")
@@ -141,6 +142,7 @@ async def main() -> int:
                 is_chat = True
 
             db.upsert_channel(tg_id=tg_id, username=username, title=title, is_chat=is_chat, folder=folder["title"])
+            active_tg_ids.append(tg_id)
             channels.append({
                 "tg_id": tg_id,
                 "username": username,
@@ -165,7 +167,18 @@ async def main() -> int:
         encoding="utf-8",
     )
 
-    print(f"[init] ✓ Готово. Сохранено каналов: {total_channels}")
+    # Авто-синк: помечаем is_active=0 для каналов, выпавших из всех папок
+    n_off, titles_off = db.deactivate_missing_channels(active_tg_ids)
+    if n_off:
+        print(f"[init] ⚙ Выпали из папок (помечены is_active=0, посты сохранены): {n_off}")
+        for t in titles_off[:10]:
+            print(f"    − {t}")
+        if n_off > 10:
+            print(f"    ... и ещё {n_off - 10}")
+    else:
+        print("[init] ⚙ Синк папок: всё на месте, удалённых нет")
+
+    print(f"[init] ✓ Готово. Активных каналов: {total_channels}")
     print(f"[init] ✓ sources.yaml: {config.SOURCES_PATH}")
     print(f"[init] ✓ База: {config.DB_PATH}")
 

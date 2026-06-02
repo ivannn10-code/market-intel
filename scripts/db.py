@@ -157,6 +157,11 @@ class DB:
         if "fingerprint" not in cols:
             self.conn.execute("ALTER TABLE posts ADD COLUMN fingerprint TEXT")
             self.conn.execute("CREATE INDEX IF NOT EXISTS idx_posts_fingerprint ON posts(fingerprint)")
+        # channels.is_active — для авто-синка папок (мягкое удаление каналов, выпавших из всех папок)
+        ch_cols = {r["name"] for r in self.conn.execute("PRAGMA table_info(channels)")}
+        if "is_active" not in ch_cols:
+            self.conn.execute("ALTER TABLE channels ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1")
+            self.conn.execute("CREATE INDEX IF NOT EXISTS idx_channels_active ON channels(is_active)")
 
     def close(self):
         self.conn.close()
@@ -173,16 +178,36 @@ class DB:
 
     def upsert_channel(self, tg_id: int, username: str | None, title: str, is_chat: bool, folder: str | None) -> int:
         cur = self.conn.execute(
-            """INSERT INTO channels (tg_id, username, title, is_chat, folder, added_at)
-               VALUES (?, ?, ?, ?, ?, ?)
+            """INSERT INTO channels (tg_id, username, title, is_chat, folder, added_at, is_active)
+               VALUES (?, ?, ?, ?, ?, ?, 1)
                ON CONFLICT(tg_id) DO UPDATE SET
                  username=excluded.username,
                  title=excluded.title,
-                 folder=excluded.folder
+                 folder=excluded.folder,
+                 is_active=1
                RETURNING id""",
             (tg_id, username, title, 1 if is_chat else 0, folder, datetime.utcnow().isoformat()),
         )
         return cur.fetchone()[0]
+
+    def deactivate_missing_channels(self, active_tg_ids: list[int]) -> tuple[int, list[str]]:
+        """Авто-синк папок: каналы, которых нет в active_tg_ids, помечаются is_active=0.
+        Не удаляет — посты по ним остаются (для истории и дайджестов).
+        Возвращает (count, [titles_deactivated])."""
+        if not active_tg_ids:
+            return 0, []
+        placeholders = ",".join("?" * len(active_tg_ids))
+        deactivated = list(self.conn.execute(
+            f"SELECT title FROM channels WHERE is_active=1 AND tg_id NOT IN ({placeholders})",
+            active_tg_ids,
+        ))
+        titles = [r["title"] for r in deactivated]
+        if titles:
+            self.conn.execute(
+                f"UPDATE channels SET is_active=0 WHERE is_active=1 AND tg_id NOT IN ({placeholders})",
+                active_tg_ids,
+            )
+        return len(titles), titles
 
     def post_exists(self, channel_id: int, tg_msg_id: int) -> bool:
         cur = self.conn.execute(

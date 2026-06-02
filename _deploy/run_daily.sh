@@ -12,16 +12,19 @@ PY="$INSTALL_DIR/venv/bin/python"
 
 echo "=== $(date) START ==="
 
-echo "--- [1/4] parser ---"
+echo "--- [0/5] init (авто-синк папок: импорт + помечает выпавшие is_active=0) ---"
+$PY -u init.py || echo "INIT FAILED, continuing"
+
+echo "--- [1/5] parser ---"
 $PY -u parser.py || echo "PARSER FAILED, continuing"
 
-echo "--- [2/4] processor ---"
+echo "--- [2/5] processor ---"
 $PY -u processor.py || echo "PROCESSOR FAILED, continuing"
 
-echo "--- [3/4] notifier ---"
+echo "--- [3/5] notifier ---"
 $PY -u notifier.py || echo "NOTIFIER FAILED, continuing"
 
-echo "--- [4/4] daily_digest ---"
+echo "--- [4/5] daily_digest ---"
 $PY -u daily_digest.py || echo "DIGEST FAILED"
 
 # Daily post generator + dispatcher (8:00 в cron-расписании отдельной строкой,
