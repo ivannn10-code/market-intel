@@ -347,12 +347,9 @@ def deliver(date: dt.date, post_path: Path, *, dry_run: bool = False) -> dict[st
                 )
                 log(date, f"WARN image missing: {image_rel}")
 
-    # 3) текст поста — в <pre>-блоке для one-tap copy
-    bot.send_message(
-        chat_id,
-        f"📝 <b>Текст поста</b> <i>(тапни — скопируется)</i>\n<pre>{bot.html_escape(body.strip())}</pre>",
-        disable_preview=True,
-    )
+    # 3) текст поста — в <pre>-блоке для one-tap copy (безопасно даже для длинных тел: send_pre сам режет на валидные блоки)
+    bot.send_message(chat_id, "📝 <b>Текст поста</b> <i>(тапни — скопируется)</i>", disable_preview=True)
+    bot.send_pre(chat_id, body.strip())
 
     # 4) голосовое — отдельной инструкцией
     if is_voice:
@@ -434,7 +431,7 @@ def notify_missing(date: dt.date) -> None:
         chat_id,
         f"⚠️ <b>На {date.strftime('%d.%m.%Y')} ({weekday_ru}) нет подготовленного поста.</b>\n\n"
         f"Ожидаемый путь:\n"
-        f"<code>.business/marketing/telegram-daily/drafts/{date.isocalendar().year}-W{date.isocalendar().week:02d}/{date.isoformat()}-*.md</code>\n\n"
+        f"<code>content_engine/drafts/{date.isocalendar().year}-W{date.isocalendar().week:02d}/{date.isoformat()}-*.md</code>\n\n"
         f"Возможные причины:\n"
         f"• Темник на эту неделю не заполнен (см. <code>weeks/</code>)\n"
         f"• V2-генератор ещё не запущен для этой даты\n"
@@ -455,7 +452,7 @@ def notify_error(date: dt.date, err: Exception) -> None:
             f"<code>{bot.html_escape(str(err))}</code>\n\n"
             f"Traceback (последние строки):\n"
             f"<pre>{bot.html_escape(tb)}</pre>\n\n"
-            f"Лог: <code>.business/marketing/telegram-daily/logs/dispatch-{date.isoformat()}.log</code>",
+            f"Лог: <code>logs/dispatch-{date.isoformat()}.log</code>",
         )
     except Exception as exc:
         # Бот не доступен — пишем только в лог

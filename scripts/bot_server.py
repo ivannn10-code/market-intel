@@ -285,7 +285,8 @@ def _send_draft(chat_id: str, draft_path: Path, db: "DB | None" = None):
         kb = publish_buttons("post")
     else:
         kb = MENU_INLINE
-    bot.send_message(chat_id, f"📄 <b>Пост готов</b> — нажми чтобы скопировать:\n\n<pre>{bot.html_escape(body)}</pre>", buttons=kb)
+    bot.send_message(chat_id, "📄 <b>Пост готов</b> — нажми чтобы скопировать:")
+    bot.send_pre(chat_id, body, buttons=kb)
 
 
 def handle_regenerate(chat_id: str, db: DB) -> None:
@@ -460,7 +461,8 @@ def handle_carousel_generate(chat_id: str, topic_idx: int, db: DB, client: Anthr
             "first_comment": content.get("first_comment", ""),
             "topic": topic,
         }, ensure_ascii=False))
-        bot.send_message(chat_id, f"📝 <b>Подпись + хэштеги + первый коммент</b> (нажми чтобы скопировать):\n\n<pre>{bot.html_escape(cap)}</pre>", buttons=publish_buttons("carousel"))
+        bot.send_message(chat_id, "📝 <b>Подпись + хэштеги + первый коммент</b> (нажми чтобы скопировать):")
+        bot.send_pre(chat_id, cap, buttons=publish_buttons("carousel"))
     except Exception as exc:
         import traceback as _tb
         bot.send_message(chat_id, f"<b>Ошибка генерации карусели:</b>\n<code>{bot.html_escape(str(exc))}</code>", buttons=MENU_INLINE)

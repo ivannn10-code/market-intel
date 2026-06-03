@@ -178,6 +178,38 @@ def html_escape(text: str) -> str:
     return text
 
 
+def send_pre(chat_id: str | int, body: str, *, buttons: list[list[dict]] | None = None) -> dict:
+    """Шлёт body в <pre>-блоке для one-tap copy. Большое тело режется по строкам
+    на несколько САМОСТОЯТЕЛЬНЫХ <pre>-сообщений (никогда не разрывает тег пополам).
+    buttons прикрепляются только к последнему сообщению (так же, как в send_message)."""
+    body = (body or "").strip()
+    MAX = 3800  # запас от лимита 4096; включает накладные расходы <pre></pre>
+    # Режем body на куски по строкам, каждый — целый <pre>...</pre>.
+    if len(body) <= MAX:
+        chunks = [body]
+    else:
+        chunks = []
+        cur = ""
+        for line in body.split("\n"):
+            if len(cur) + len(line) + 1 > MAX:
+                if cur:
+                    chunks.append(cur)
+                cur = line
+            else:
+                cur = cur + "\n" + line if cur else line
+        if cur:
+            chunks.append(cur)
+    last = None
+    for i, ch in enumerate(chunks):
+        is_last = (i == len(chunks) - 1)
+        payload_text = f"<pre>{html_escape(ch)}</pre>"
+        last = send_message(
+            chat_id, payload_text,
+            buttons=(buttons if (is_last and buttons) else None),
+        )
+    return last or {}
+
+
 def send_document(chat_id: str | int, document_path: Path, caption: str = "") -> dict:
     """Отправить файл (PDF, XLSX, и т.п.) через sendDocument."""
     token = config.env("TELEGRAM_BOT_TOKEN", required=True)

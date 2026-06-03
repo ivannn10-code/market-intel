@@ -50,7 +50,7 @@ def send_to_bot(post: dict) -> None:
     header = f"🧵 <b>Threads</b> · {post['format_name']} · {post['audience']}{cta_mark}"
     body = post["text"]
     bot.send_message(chat, header)
-    bot.send_message(chat, f"<pre>{bot.html_escape(body)}</pre>")
+    bot.send_pre(chat, body)
 
 
 def main() -> int:
