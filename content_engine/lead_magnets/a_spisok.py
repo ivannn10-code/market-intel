@@ -43,8 +43,8 @@ QUESTIONS = [
      "f": "В рекламе «готовность 60%», а на стройке нулевой цикл — обманывают и дальше."},
     # Группа 2: Стоимость и сервис
     {"q": "Что входит в стоимость квартиры — отделка, кладовка, машиноместо, благоустройство, балкон?",
-     "e": "В бизнес-классе часто «голые стены без отделки». Парковка и кладовка — отдельные договоры, 200-800 тыс ₽ за машиноместо.",
-     "f": "«Уточним при подписании» — закладывайте +10-30% к рекламной цене."},
+     "e": "В бизнес-классе часто «голые стены без отделки». Парковка и кладовка — отдельные договоры. Машиноместо в бизнес-классе Москвы — от 3-5 млн ₽, в премиум-сегменте — до 7-10 млн.",
+     "f": "«Уточним при подписании» — закладывайте к цене квартиры ещё цену машино-места и кладовой."},
     {"q": "На каком этапе известна управляющая компания, кто за ней стоит, какой тариф в ₽/м²?",
      "e": "Аффилированная с застройщиком УК на старте — норма. Тариф 90-180 ₽/м² типичен. Ниже 70 ₽/м² — экономия на сервисе.",
      "f": "Тариф не назван или «определит общее собрание» — будете платить надбавку позже."},
@@ -90,6 +90,7 @@ META = {
     "subtitle": "Список, который я держу в голове на каждой первой встрече с застройщиком. Без этих вопросов покупать квартиру в новостройке — лотерея, а не сделка.",
     "title_anchor_label": "вопросов до подписания",
     "title_anchor_num": "12",
+    "epigraph": "Я проверяю каждого застройщика<br>по этому списку — до сделки.<br>Не из недоверия. Из 12 лет опыта.",
 }
 
 CTA = {
@@ -157,6 +158,15 @@ html, body { background: var(--bg); color: var(--text); font-family: 'Inter', sa
 }
 
 /* === COVER === */
+.cover-epigraph {
+  margin-top: 16mm; max-width: 120mm; margin-left: auto;
+  text-align: right; padding: 6mm 8mm;
+  background: rgba(11,46,56,0.62); border-radius: 4mm;
+  border-right: 3px solid var(--accent);
+  box-shadow: 0 4mm 14mm rgba(0,0,0,0.22);
+  font-family: 'PT Serif', serif; font-style: italic; font-weight: 400;
+  font-size: 14pt; line-height: 1.35; color: var(--accent);
+}
 .cover-body { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; padding-bottom: 6mm; }
 .cover-tag {
   display: inline-flex; align-self: flex-start;
@@ -292,6 +302,10 @@ def _generate_backgrounds(out_dir: Path) -> dict[int, str]:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     def gen_one(num: int, hint: str):
+        existing = out_dir / f"bg-{num}.png"
+        if existing.exists() and existing.stat().st_size > 50_000:
+            print(f"[A] = bg-{num}.png exists, reuse ({existing.stat().st_size // 1024} KB)")
+            return num, existing.name
         try:
             path = out_dir / f"bg-{num}.png"
             generate_bg(build_bg_prompt(hint), path)
@@ -359,6 +373,7 @@ def build_html(bgs: dict[int, str]) -> str:
     page1 = (
         _page_open(1, bgs)
         + _brand_strip("Чек-лист · 01 / 05")
+        + f'<div class="cover-epigraph">{META["epigraph"]}</div>'
         + '<div class="cover-body">'
         + f'<div class="cover-tag">{META["tag"]}</div>'
         + f'<div class="cover-title">{META["title"]}</div>'
