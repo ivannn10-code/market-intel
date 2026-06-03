@@ -3,108 +3,165 @@
 @page { size: A4 portrait; margin: 0; }
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 :root {
-  --bg: #E7E2D8;
-  --ink: #1A1F26;
-  --teal: #0F3D4A;
+  --bg: #0F3D4A;
+  --text: #E7E2D8;
   --accent: #FF5A2A;
   --steel: #4A6A7B;
-  --muted: rgba(15,61,74,0.55);
+  --muted: rgba(231,226,216,0.62);
+  --line: rgba(231,226,216,0.18);
 }
-html, body { background: var(--bg); color: var(--ink); font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
-.page { width: 210mm; min-height: 297mm; padding: 18mm 18mm 14mm 18mm; position: relative; background: var(--bg); }
-.page + .page { page-break-before: always; }
+html, body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
+
+.page {
+  width: 210mm; min-height: 297mm; padding: 14mm 18mm 12mm 18mm;
+  position: relative; color: var(--text);
+  background-color: var(--bg); background-size: cover; background-position: center; background-repeat: no-repeat;
+  display: flex; flex-direction: column;
+  page-break-after: always;
+}
+.page:last-child { page-break-after: auto; }
+.page::before {
+  content: ""; position: absolute; inset: 0; z-index: 1;
+  background: linear-gradient(180deg,
+    rgba(11,46,56,0.92) 0%, rgba(11,46,56,0.78) 32%,
+    rgba(11,46,56,0.66) 56%, rgba(11,46,56,0.86) 100%);
+}
+.page > * { position: relative; z-index: 2; }
+.page > .foot { margin-top: auto; }
 
 /* верхняя плашка */
 .brand-strip {
   display: flex; justify-content: space-between; align-items: center;
   font-size: 8.5pt; letter-spacing: 1.8pt; text-transform: uppercase;
-  color: var(--steel); font-weight: 600;
-  padding-bottom: 4mm; border-bottom: 1px solid rgba(74,106,123,0.22);
+  color: var(--muted); font-weight: 600;
+  padding-bottom: 4mm; border-bottom: 1px solid var(--line);
 }
-.brand-strip .mark { color: var(--accent); margin-right: 6px; font-size: 11pt; line-height: 0; }
-
-/* hero */
-.tag {
-  display: inline-block; margin-top: 13mm;
-  font-size: 9.5pt; letter-spacing: 2.2pt; text-transform: uppercase;
-  color: var(--accent); font-weight: 600;
-  border-left: 3px solid var(--accent); padding: 3px 0 3px 11px;
-}
-.title {
-  font-family: 'PT Serif', serif; font-weight: 700;
-  font-size: 38pt; line-height: 1.04; letter-spacing: -0.8pt;
-  color: var(--teal); margin-top: 7mm; white-space: pre-line;
-}
-.subtitle {
-  font-size: 11.5pt; line-height: 1.5; color: var(--steel);
-  margin-top: 6mm; max-width: 150mm;
-}
-.hr-accent { width: 100%; height: 1px; background: var(--accent); margin: 8mm 0 4mm 0; }
-
-/* вопросы */
-.q { display: grid; grid-template-columns: 16mm 1fr; gap: 4mm; padding: 5mm 0 5mm 0; border-bottom: 1px solid rgba(74,106,123,0.16); }
-.q:last-child { border-bottom: none; }
-.q .num {
-  font-family: 'PT Serif', serif; font-weight: 700; font-style: italic;
-  font-size: 30pt; line-height: 0.95; color: var(--accent);
-  letter-spacing: -1pt;
-}
-.q .body { display: flex; flex-direction: column; gap: 2.2mm; }
-.q .question {
-  font-family: 'PT Serif', serif; font-weight: 700;
-  font-size: 13pt; line-height: 1.25; color: var(--teal);
-}
-.q .explain { font-size: 10.2pt; line-height: 1.5; color: var(--ink); }
-.q .flag {
-  font-size: 9.8pt; line-height: 1.45; color: var(--accent); font-weight: 500;
-  background: rgba(255,90,42,0.07); padding: 2.5mm 3mm; border-radius: 2mm;
-  border-left: 2px solid var(--accent);
-}
+.brand-strip .mark { color: var(--accent); margin-right: 7px; font-size: 11pt; line-height: 0; }
 
 /* подвал */
 .foot {
-  position: absolute; left: 18mm; right: 18mm; bottom: 8mm;
   display: flex; justify-content: space-between; align-items: center;
-  font-size: 8pt; letter-spacing: 0.8pt; text-transform: uppercase;
+  padding-top: 4mm; border-top: 1px solid var(--line);
+  font-size: 8pt; letter-spacing: 0.9pt; text-transform: uppercase;
   color: var(--muted); font-weight: 600;
 }
 
-/* CTA-карточка */
-.cta {
-  margin-top: 7mm;
-  background: var(--teal); color: var(--bg);
-  border-radius: 5mm; padding: 10mm 11mm 9mm 11mm;
-  position: relative; overflow: hidden;
+/* === COVER === */
+.cover-body { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; padding-bottom: 6mm; }
+.cover-tag {
+  display: inline-flex; align-self: flex-start;
+  font-size: 9.5pt; letter-spacing: 2.4pt; text-transform: uppercase;
+  color: var(--accent); font-weight: 600;
+  border-left: 3px solid var(--accent); padding: 3px 0 3px 12px;
+  margin-bottom: 8mm;
 }
-.cta::before {
+.cover-title {
+  font-family: 'PT Serif', serif; font-weight: 700;
+  font-size: 46pt; line-height: 1.02; letter-spacing: -1pt;
+  color: var(--text); white-space: pre-line;
+  text-shadow: 0 2px 24px rgba(0,0,0,0.45);
+}
+.cover-subtitle {
+  font-size: 12pt; line-height: 1.55; color: rgba(231,226,216,0.82);
+  margin-top: 7mm; max-width: 150mm;
+}
+.cover-stat { margin-top: 10mm; display: inline-flex; align-items: baseline; gap: 5mm; }
+.cover-stat .v {
+  font-family: 'PT Serif', serif; font-weight: 700; font-style: italic;
+  font-size: 56pt; line-height: 1; color: var(--accent); letter-spacing: -2pt;
+}
+.cover-stat .l {
+  font-size: 9pt; letter-spacing: 2pt; text-transform: uppercase;
+  color: rgba(231,226,216,0.7); max-width: 50mm; line-height: 1.4;
+}
+
+/* === CONTENT === */
+.content-body { flex: 1; display: flex; flex-direction: column; padding-top: 6mm; }
+.content-tag {
+  display: inline-flex; align-self: flex-start;
+  font-size: 9pt; letter-spacing: 2.4pt; text-transform: uppercase;
+  color: var(--accent); font-weight: 600;
+  border-left: 3px solid var(--accent); padding: 3px 0 3px 11px;
+  margin-bottom: 7mm;
+}
+.q {
+  display: grid; grid-template-columns: 14mm 1fr; gap: 4mm;
+  padding: 3.5mm 0;
+}
+.q + .q { border-top: 1px solid var(--line); }
+.q .num {
+  font-family: 'PT Serif', serif; font-weight: 700; font-style: italic;
+  font-size: 26pt; line-height: 1; color: var(--accent);
+  letter-spacing: -1pt;
+}
+.q .body { display: flex; flex-direction: column; gap: 1.5mm; }
+.q .question {
+  font-family: 'PT Serif', serif; font-weight: 700;
+  font-size: 11.5pt; line-height: 1.25; color: var(--text);
+  text-shadow: 0 1px 14px rgba(0,0,0,0.4);
+}
+.q .explain {
+  font-size: 9.5pt; line-height: 1.45; color: rgba(231,226,216,0.86);
+}
+.q .flag {
+  font-size: 9pt; line-height: 1.4; color: #FFD0BF; font-weight: 500;
+  background: rgba(255,90,42,0.13); padding: 1.8mm 2.5mm;
+  border-radius: 1.5mm; border-left: 2px solid var(--accent);
+  margin-top: 0.5mm;
+}
+
+/* === CTA === */
+.cta-body { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 6mm 0; }
+.cta-card {
+  background: rgba(11,46,56,0.88); border-radius: 6mm;
+  padding: 14mm 12mm 11mm 12mm; position: relative; overflow: hidden;
+  border: 1px solid rgba(231,226,216,0.12);
+  box-shadow: 0 10mm 30mm rgba(0,0,0,0.35);
+}
+.cta-card::before {
   content: ""; position: absolute; left: 0; top: 0; bottom: 0;
   width: 5mm; background: var(--accent);
 }
+.cta-card::after {
+  content: ""; position: absolute; top: -20mm; right: -20mm;
+  width: 70mm; height: 70mm; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,90,42,0.32) 0%, rgba(255,90,42,0) 65%);
+}
 .cta-tag {
-  font-size: 8.5pt; letter-spacing: 2.4pt; text-transform: uppercase;
+  font-size: 9pt; letter-spacing: 2.4pt; text-transform: uppercase;
   color: var(--accent); font-weight: 600; padding-left: 2mm;
 }
 .cta-headline {
   font-family: 'PT Serif', serif; font-weight: 700;
-  font-size: 19pt; line-height: 1.22; margin-top: 3mm; padding-left: 2mm;
+  font-size: 22pt; line-height: 1.18; margin-top: 4mm; padding-left: 2mm;
+  color: var(--text);
 }
 .cta-lead {
-  font-size: 10.5pt; line-height: 1.5; margin-top: 5mm; padding-left: 2mm;
+  font-size: 11pt; line-height: 1.5; margin-top: 6mm; padding-left: 2mm;
   color: rgba(231,226,216,0.85);
 }
-.cta-code-row { margin-top: 3mm; padding-left: 2mm; display: flex; align-items: baseline; gap: 4mm; }
 .cta-code {
+  display: inline-block; margin-top: 5mm; margin-left: 2mm;
   font-family: 'PT Serif', serif; font-weight: 700;
-  font-size: 24pt; letter-spacing: 2pt; color: var(--accent);
-  padding: 2mm 6mm; border: 1.5px solid var(--accent); border-radius: 2mm;
+  font-size: 28pt; letter-spacing: 2.5pt; color: var(--accent);
+  padding: 3mm 9mm; border: 1.8px solid var(--accent); border-radius: 2.5mm;
+  background: rgba(255,90,42,0.08);
 }
-.cta-where { font-size: 10pt; color: rgba(231,226,216,0.78); }
-.cta-contacts { margin-top: 6mm; padding-left: 2mm; font-size: 10.5pt; line-height: 1.7; }
+.cta-contacts { margin-top: 8mm; padding-left: 2mm; font-size: 11pt; line-height: 1.7; }
 .cta-contacts a { color: var(--accent); text-decoration: none; font-weight: 600; }
-.cta-contacts .label { color: rgba(231,226,216,0.65); margin-right: 4mm; text-transform: uppercase; letter-spacing: 1pt; font-size: 8.5pt; font-weight: 600; }
-.cta-sig {
-  margin-top: 7mm; padding-left: 2mm; font-size: 8.5pt;
-  color: rgba(231,226,216,0.62); letter-spacing: 0.8pt; text-transform: uppercase; font-weight: 500;
+.cta-contacts .label {
+  display: inline-block; min-width: 28mm;
+  color: rgba(231,226,216,0.55);
+  text-transform: uppercase; letter-spacing: 1.2pt; font-size: 8.5pt; font-weight: 600;
 }
-</style></head><body><div class="page"><div class="brand-strip"><div><span class="mark">✱</span>ИГ · НЕДВИЖИМОСТЬ МОСКВЫ</div><div>Чек-лист · 01 / 02</div></div><div class="tag">Чек-лист · бесплатно</div><div class="title">12 вопросов
-застройщику<br>до сделки</div><div class="subtitle">Список, который я держу в голове на каждой первой встрече с застройщиком. Без этих вопросов покупать квартиру в новостройке — лотерея, а не сделка.</div><div class="hr-accent"></div><div class="q"><div class="num">01</div><div class="body"><div class="question">Сколько лет работает на рынке Москвы — и сколько объектов сдано конкретно в бизнес-классе?</div><div class="explain">Сегмент бизнес-класса требует другой компетенции, чем эконом: материалы, отделка МОП, инженерия, сервис УК. Минимум 5 лет в нише и хотя бы 3 сданных объекта.</div><div class="flag">🚩 Только эконом за плечами + первый «бизнес-класс» — будут косяки в шумоизоляции, отделке мест общего пользования и сервисе.</div></div></div><div class="q"><div class="num">02</div><div class="body"><div class="question">Покажите акты ввода в эксплуатацию последних 5 объектов с датами по плану и по факту.</div><div class="explain">Срыв сроков на 3-6 месяцев — рыночная норма. Срыв на 12+ месяцев на двух подряд проектах — система.</div><div class="flag">🚩 «Документов на встрече нет, вышлем позже» — пометьте красным и проверьте сами в ЕИСЖС (наш.дом.рф).</div></div></div><div class="q"><div class="num">03</div><div class="body"><div class="question">Какой банк держит эскроу-счета и какой процент стройки покрыт проектным финансированием?</div><div class="explain">ТОП-10 банков по 214-ФЗ — нормальный риск-профиль. Региональный малый банк или непрозрачная структура — риск.</div><div class="flag">🚩 На дату подписания ДДУ эскроу не открыто или у банка отозвана аккредитация — стоп, не подписывайте.</div></div></div><div class="q"><div class="num">04</div><div class="body"><div class="question">Какая степень готовности дома сегодня — по факту, а не в рекламе?</div><div class="explain">ЕИСЖС (наш.дом.рф) показывает реальную степень готовности объекта по застройщику. Сверяйтесь публично, не верьте на слово.</div><div class="flag">🚩 В рекламе «готовность 60%», а на стройке нулевой цикл — обманывают сейчас, обманут и при передаче ключей.</div></div></div><div class="q"><div class="num">05</div><div class="body"><div class="question">Что входит в стоимость квартиры — отделка, кладовка, машиноместо, благоустройство, балкон?</div><div class="explain">В бизнес-классе часто «голые стены без отделки». Парковка и кладовка — отдельные договоры, 200-800 тыс ₽ за машиноместо.</div><div class="flag">🚩 «Уточним при подписании» — закладывайте +10-30% к рекламной цене на доп-опции.</div></div></div><div class="q"><div class="num">06</div><div class="body"><div class="question">На каком этапе известна управляющая компания, кто за ней стоит, какой тариф в ₽/м²?</div><div class="explain">Аффилированная с застройщиком УК на старте — норма для бизнес-класса. Тариф 90-180 ₽/м² типичен. Ниже 70 ₽/м² — экономия на сервисе.</div><div class="flag">🚩 Тариф не назван или «определит общее собрание» — будете платить надбавку через год после заезда.</div></div></div><div class="foot"><div>Иван Гладышев · Недвижимость Москвы</div><div>Код выдачи · СПИСОК</div></div></div><div class="page"><div class="brand-strip"><div><span class="mark">✱</span>ИГ · НЕДВИЖИМОСТЬ МОСКВЫ</div><div>Чек-лист · 02 / 02</div></div><div style="margin-top:8mm;"></div><div class="q"><div class="num">07</div><div class="body"><div class="question">Условия пересчёта стоимости после обмера БТИ — кто компенсирует разницу?</div><div class="explain">Метраж по ДДУ часто отличается от БТИ на 0,5-2 м². Норма: за плюс доплачиваете вы, за минус возвращает застройщик.</div><div class="flag">🚩 В договоре «доплачивает покупатель» при любом отклонении (включая минус) — заведомо невыгодная формулировка.</div></div></div><div class="q"><div class="num">08</div><div class="body"><div class="question">ВРИ земельного участка — под многоэтажное жилое строительство? Разрешение на строительство действующее?</div><div class="explain">Вид разрешённого использования и РНС публично проверяются в ЕИСЖС и Росреестре по адресу участка.</div><div class="flag">🚩 ВРИ «коммерция» с переоформлением «по ходу стройки» — приостановка строительства возможна на любой стадии.</div></div></div><div class="q"><div class="num">09</div><div class="body"><div class="question">Сроки и условия передачи квартиры: приёмка, штрафы, как фиксируются дефекты?</div><div class="explain">От ввода дома до подписания акта — обычно до 6 месяцев. За просрочку застройщик платит неустойку (1/300 ставки ЦБ за день для физлиц).</div><div class="flag">🚩 Договор обязывает к «приёмке без замечаний» или ограничивает срок устранения дефектов 30 днями — невыгодно покупателю.</div></div></div><div class="q"><div class="num">10</div><div class="body"><div class="question">Условия переуступки прав по ДДУ до сдачи: процент, согласования, ограничения?</div><div class="explain">Обычно 1-3% от цены ДДУ за согласование переуступки + сделка только через эскроу того же банка.</div><div class="flag">🚩 «Переуступка только с нашего согласия» без чётких условий — ваш выход из объекта зависит от воли застройщика.</div></div></div><div class="q"><div class="num">11</div><div class="body"><div class="question">Социальная и транспортная инфраструктура — что застройщик обязан построить и когда?</div><div class="explain">Школа/детсад/паркинг — отдельные этапы, часто +1-3 года к жилью. Метро/развязки — обещания vs реальные планы города.</div><div class="flag">🚩 Инфраструктура есть в рекламном буклете, но в проектной декларации отсутствует — значит, не будет.</div></div></div><div class="q"><div class="num">12</div><div class="body"><div class="question">История судов с дольщиками: сколько исков за 3 года, какие выиграны / проиграны / в работе?</div><div class="explain">Бесплатно проверяется по ИНН застройщика на kad.arbitr.ru. Один-два проигрыша — норма. 20+ исков за 3 года — система проблем.</div><div class="flag">🚩 «У нас не бывает судов» — проверьте сами за 5 минут на сайте арбитражного суда.</div></div></div><div class="cta"><div class="cta-tag">Решаю задачу клиента — лично</div><div class="cta-headline">Хотите проверить вашего застройщика<br>по этому списку — лично со мной?</div><div class="cta-lead">Пришлите кодовое слово</div><div class="cta-code-row"><div class="cta-code">СПИСОК</div><div class="cta-where">в Telegram, SMS или звонком</div></div><div class="cta-contacts"><div><span class="label">Telegram</span><a href="https://t.me/IVAN_SUNSIDE">@IVAN_SUNSIDE</a></div><div><span class="label">Звонок / SMS</span><a href="tel:+79250788090">+7 (925) 078-80-90</a></div></div><div class="cta-sig">Иван Гладышев · Недвижимость Москвы · 12 лет на рынке</div></div><div class="foot"><div>Иван Гладышев · Недвижимость Москвы</div><div>Код выдачи · СПИСОК</div></div></div></body></html>
+.cta-author {
+  margin-top: 9mm; padding-left: 2mm; padding-top: 4mm;
+  border-top: 1px solid rgba(231,226,216,0.18);
+}
+.cta-author-name { font-family: 'PT Serif', serif; font-weight: 700; font-size: 13pt; color: var(--text); }
+.cta-author-meta {
+  font-size: 9pt; letter-spacing: 0.6pt; color: rgba(231,226,216,0.7);
+  margin-top: 1.5mm; text-transform: uppercase; font-weight: 500;
+}
+</style></head><body><div class="page" style="background-image:url('bg-1.png');"><div class="brand-strip"><div><span class="mark">✱</span>ИГ · НЕДВИЖИМОСТЬ МОСКВЫ</div><div>Чек-лист · 01 / 05</div></div><div class="cover-body"><div class="cover-tag">Чек-лист · бесплатно</div><div class="cover-title">12 вопросов
+застройщику<br>до сделки</div><div class="cover-subtitle">Список, который я держу в голове на каждой первой встрече с застройщиком. Без этих вопросов покупать квартиру в новостройке — лотерея, а не сделка.</div><div class="cover-stat"><span class="v">12</span><span class="l">вопросов до подписания</span></div></div><div class="foot"><div>Иван Гладышев · Недвижимость Москвы</div><div>Код выдачи · СПИСОК · 01 / 05</div></div></div><div class="page" style="background-image:url('bg-2.png');"><div class="brand-strip"><div><span class="mark">✱</span>ИГ · НЕДВИЖИМОСТЬ МОСКВЫ</div><div>Чек-лист · 02 / 05</div></div><div class="content-body"><div class="content-tag">Компания и документы</div><div class="q"><div class="num">01</div><div class="body"><div class="question">Сколько лет работает на рынке Москвы — и сколько объектов сдано конкретно в бизнес-классе?</div><div class="explain">Сегмент бизнес-класса требует другой компетенции, чем эконом: материалы, отделка МОП, инженерия, сервис УК. Минимум 5 лет в нише и хотя бы 3 сданных объекта.</div><div class="flag">🚩 Только эконом за плечами + первый «бизнес-класс» — будут косяки в шумоизоляции и сервисе.</div></div></div><div class="q"><div class="num">02</div><div class="body"><div class="question">Покажите акты ввода в эксплуатацию последних 5 объектов с датами по плану и по факту.</div><div class="explain">Срыв сроков на 3-6 месяцев — норма. Срыв на 12+ месяцев на двух подряд проектах — система.</div><div class="flag">🚩 «Документов на встрече нет, вышлем позже» — проверьте сами в ЕИСЖС (наш.дом.рф).</div></div></div><div class="q"><div class="num">03</div><div class="body"><div class="question">Какой банк держит эскроу-счета и какой процент стройки покрыт проектным финансированием?</div><div class="explain">ТОП-10 банков по 214-ФЗ — нормальный риск-профиль. Региональный малый банк или непрозрачная структура — риск.</div><div class="flag">🚩 На дату подписания ДДУ эскроу не открыто или у банка отозвана аккредитация — стоп.</div></div></div><div class="q"><div class="num">04</div><div class="body"><div class="question">Какая степень готовности дома сегодня — по факту, а не в рекламе?</div><div class="explain">ЕИСЖС (наш.дом.рф) показывает реальную степень готовности объекта. Сверяйтесь публично, не верьте на слово.</div><div class="flag">🚩 В рекламе «готовность 60%», а на стройке нулевой цикл — обманывают и дальше.</div></div></div></div><div class="foot"><div>Иван Гладышев · Недвижимость Москвы</div><div>Код выдачи · СПИСОК · 02 / 05</div></div></div><div class="page" style="background-image:url('bg-3.png');"><div class="brand-strip"><div><span class="mark">✱</span>ИГ · НЕДВИЖИМОСТЬ МОСКВЫ</div><div>Чек-лист · 03 / 05</div></div><div class="content-body"><div class="content-tag">Стоимость и сервис</div><div class="q"><div class="num">05</div><div class="body"><div class="question">Что входит в стоимость квартиры — отделка, кладовка, машиноместо, благоустройство, балкон?</div><div class="explain">В бизнес-классе часто «голые стены без отделки». Парковка и кладовка — отдельные договоры, 200-800 тыс ₽ за машиноместо.</div><div class="flag">🚩 «Уточним при подписании» — закладывайте +10-30% к рекламной цене.</div></div></div><div class="q"><div class="num">06</div><div class="body"><div class="question">На каком этапе известна управляющая компания, кто за ней стоит, какой тариф в ₽/м²?</div><div class="explain">Аффилированная с застройщиком УК на старте — норма. Тариф 90-180 ₽/м² типичен. Ниже 70 ₽/м² — экономия на сервисе.</div><div class="flag">🚩 Тариф не назван или «определит общее собрание» — будете платить надбавку позже.</div></div></div><div class="q"><div class="num">07</div><div class="body"><div class="question">Условия пересчёта стоимости после обмера БТИ — кто компенсирует разницу?</div><div class="explain">Метраж по ДДУ часто отличается от БТИ на 0,5-2 м². Норма: за плюс доплачиваете вы, за минус возвращает застройщик.</div><div class="flag">🚩 «Доплачивает покупатель» при любом отклонении (включая минус) — заведомо невыгодно.</div></div></div><div class="q"><div class="num">08</div><div class="body"><div class="question">ВРИ земельного участка — под многоэтажное жилое строительство? Разрешение на строительство действующее?</div><div class="explain">Вид разрешённого использования и РНС публично проверяются в ЕИСЖС и Росреестре по адресу участка.</div><div class="flag">🚩 ВРИ «коммерция» с переоформлением «по ходу стройки» — стройка может встать.</div></div></div></div><div class="foot"><div>Иван Гладышев · Недвижимость Москвы</div><div>Код выдачи · СПИСОК · 03 / 05</div></div></div><div class="page" style="background-image:url('bg-4.png');"><div class="brand-strip"><div><span class="mark">✱</span>ИГ · НЕДВИЖИМОСТЬ МОСКВЫ</div><div>Чек-лист · 04 / 05</div></div><div class="content-body"><div class="content-tag">Передача и риски</div><div class="q"><div class="num">09</div><div class="body"><div class="question">Сроки и условия передачи квартиры: приёмка, штрафы, как фиксируются дефекты?</div><div class="explain">От ввода дома до подписания акта — до 6 месяцев. За просрочку застройщик платит неустойку (1/300 ставки ЦБ за день для физлиц).</div><div class="flag">🚩 Договор обязывает к «приёмке без замечаний» — невыгодно покупателю.</div></div></div><div class="q"><div class="num">10</div><div class="body"><div class="question">Условия переуступки прав по ДДУ до сдачи: процент, согласования, ограничения?</div><div class="explain">Обычно 1-3% от цены ДДУ за согласование переуступки + сделка только через эскроу того же банка.</div><div class="flag">🚩 «Переуступка только с нашего согласия» без условий — выход зависит от воли застройщика.</div></div></div><div class="q"><div class="num">11</div><div class="body"><div class="question">Социальная и транспортная инфраструктура — что застройщик обязан построить и когда?</div><div class="explain">Школа/детсад/паркинг — отдельные этапы, часто +1-3 года к жилью. Метро/развязки — обещания vs планы города.</div><div class="flag">🚩 Инфраструктура есть в буклете, но в проектной декларации отсутствует — значит, не будет.</div></div></div><div class="q"><div class="num">12</div><div class="body"><div class="question">История судов с дольщиками: сколько исков за 3 года, какие выиграны / проиграны / в работе?</div><div class="explain">Бесплатно проверяется по ИНН застройщика на kad.arbitr.ru. Один-два проигрыша — норма. 20+ исков за 3 года — система.</div><div class="flag">🚩 «У нас не бывает судов» — проверьте сами за 5 минут на сайте арбитражного суда.</div></div></div></div><div class="foot"><div>Иван Гладышев · Недвижимость Москвы</div><div>Код выдачи · СПИСОК · 04 / 05</div></div></div><div class="page" style="background-image:url('bg-5.png');"><div class="brand-strip"><div><span class="mark">✱</span>ИГ · НЕДВИЖИМОСТЬ МОСКВЫ</div><div>Чек-лист · 05 / 05</div></div><div class="cta-body"><div class="cta-card"><div class="cta-tag">Решаю задачу клиента — лично</div><div class="cta-headline">Хотите проверить вашего застройщика<br>по этому списку — лично со мной?</div><div class="cta-lead">Пришлите кодовое слово в Telegram, SMS или звонком</div><div class="cta-code">СПИСОК</div><div class="cta-contacts"><div><span class="label">Telegram</span><a href="https://t.me/IVAN_SUNSIDE">@IVAN_SUNSIDE</a></div><div><span class="label">Звонок / SMS</span><a href="tel:+79250788090">+7 (925) 078-80-90</a></div></div><div class="cta-author"><div class="cta-author-name">Иван Гладышев</div><div class="cta-author-meta">Недвижимость Москвы · 12 лет на рынке</div></div></div></div><div class="foot"><div>Иван Гладышев · Недвижимость Москвы</div><div>Код выдачи · СПИСОК · 05 / 05</div></div></div></body></html>
