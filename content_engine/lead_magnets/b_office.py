@@ -1,18 +1,14 @@
-"""Лид-магнит B · «7 параметров сравнения офисов класса А» (5 страниц с AI-фонами).
+"""Лид-магнит B v2 · «8 параметров оценки офиса класса А» (4 страницы, простой язык).
 
-5 страниц A4 портрет, тёмная палитра v4.0, для сегментов:
-  — Бизнесы под собственный офис
-  — Инвесторы в коммерческую недвижимость (yield + ликвидность)
+4 страницы A4 портрет, тёмная палитра v4.0, без виньеток (ровный лёгкий оверлей).
+Язык — человеческий, для собственника или инвестора, без англицизмов и брокерского
+жаргона. Каждый параметр объясняет ЗАЧЕМ важно, не просто что должно быть.
 
 Структура:
   1. Обложка
-  2. Параметры 1-2 · «Локация и финансовая модель»
-  3. Параметры 3-5 · «Здание и собственник»
-  4. Параметры 6-7 · «Инженерия и арендаторы»
-  5. CTA (код ОФИС)
-
-Цифры опираются на публичные ежегодные обзоры Cushman & Wakefield, JLL, Knight Frank,
-Colliers + 214/41/ФЗ + Росреестр. Без названий конкретных БЦ.
+  2. Параметры 1-4 · «Где, почём, как устроено»
+  3. Параметры 5-8 · «Что вокруг и кто за этим стоит»
+  4. CTA (код ОФИС)
 """
 
 from __future__ import annotations
@@ -24,65 +20,65 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
-sys.path.insert(0, str(HERE.parent / "visual"))  # ai_bg
+sys.path.insert(0, str(HERE.parent / "visual"))
 
 from build import render_html_to_pdf
 
 
-# ── Контент 7 параметров (по группам) ───────────────────────────────────────
+# ── Контент 8 параметров (по 4 в группу) — простой язык ─────────────────────
 
 PARAMS = [
-    # Группа 1: Локация и финансовая модель (page 2)
-    {"q": "Локация и доступность — ≤7 минут пешком до метро, парковочный коэффициент.",
-     "e": "Класс А — ≤7 мин пешком до станции, ≤500-700 м. Парковка: 1 машино-место на 60-80 м² арендуемой (в Сити часто 1:200, что считается дефицитом).",
-     "f": "Метро «в шаговой» 15+ минут или «достроят к 2030» — закладывайте дисконт в IRR."},
-    {"q": "Цена входа vs аренда — IRR, cap rate, срок окупаемости?",
-     "e": "Текущая ставка аренды в Москве, класс А (центр): 30-60 тыс ₽/м²/год без НДС (2026). Cap rate класса А: 8-11%. Срок окупаемости при покупке — 10-13 лет без индексации, 8-11 с ней.",
-     "f": "«Аренда по запросу» — не сравнить с рынком. Требуйте цифры по соседним объектам в кластере."},
-    # Группа 2: Здание и собственник (page 3)
-    {"q": "Технические параметры здания — Grade A признаки по факту?",
-     "e": "Высота потолков 3+ м от плиты до плиты, шаг колонн 6-9 м, открывающиеся окна или фрамуги, BMS (Building Management System), серверная 1 на 5000 м².",
-     "f": "«Класс А» в рекламе ≠ класс А по факту. Проверяйте чек-листом Cushman/JLL/Knight Frank."},
-    {"q": "Юридическая чистота: собственник, история объекта, обременения?",
-     "e": "Собственник публичный или закрытый? История смены собственников за 10 лет, залоги, обременения, аресты, банкротства — проверяется в Росреестре и kad.arbitr.ru по ИНН.",
-     "f": "Объект в залоге у банка с проблемами или собственник банкротится — ваш выход зависит от удачи."},
-    {"q": "ВРИ участка — «деловое управление» или «коммерческое»? Не «производственное / складское»?",
-     "e": "Вид разрешённого использования публичен в Росреестре. Только «деловое управление» / «общественно-деловое» позволяет полноценный офис класса А.",
-     "f": "ВРИ «производство» с переоформлением «по ходу» — риск приостановки или невозможности расширения."},
-    # Группа 3: Инженерия и арендаторы (page 4)
-    {"q": "Управляющая компания и OPEX — тариф, опыт работы с классом А, рейтинг?",
-     "e": "OPEX класса А в Москве 2026: 6-12 тыс ₽/м²/год без НДС. Часы работы security и инженерного обслуживания 24/7 — норма. Опыт УК с классом А — критично.",
-     "f": "OPEX «уточним позже» = +20-50% к расчётной экономике объекта. Цифру требуйте на встрече."},
-    {"q": "Арендаторы и репутация БЦ — структура tenants и ликвидность при выходе?",
-     "e": "Mix крупных арендаторов (Big4, банки, IT, fintech) > 50% = устойчивость. Сменяемость <20% в год — здоровая динамика. Репутация в индустрии проверяется у брокеров (Cushman, JLL, Knight Frank).",
-     "f": "Объект «никто не знает» в индустрии = низкая ликвидность при перепродаже и сложный найм арендаторов."},
+    # Группа 1: Где, почём, как устроено
+    {"q": "Можно ли дойти до метро пешком за 7-10 минут?",
+     "e": "Это норма для класса А. Если дольше — команда теряет час в день, опаздывает, устаёт. Близость к ТТК или МКАД — для встреч с клиентами и поездок.",
+     "f": "Метро в 15+ минутах или «обещают построить» — это уже не класс А, и цена должна быть с дисконтом."},
+    {"q": "Что входит в цену аренды — узнайте полную ставку, не «голую».",
+     "e": "Полная цена = аренда + эксплуатация + электричество + НДС. «Голая» ставка плюс эксплуатация — реальная цена вырастает на 30-50%. Индексация: 5-10% в год, в Москве сейчас до 15%.",
+     "f": "«Цена по запросу» — обходите. Хороший арендодатель цены не прячет."},
+    {"q": "Какие потолки, открываются ли окна, как с вентиляцией?",
+     "e": "Для класса А — потолки от 3 метров. Низкие давят. Окна должны открываться или иметь фрамуги — без свежего воздуха люди устают за 4 часа. Большие панорамы — это не красота, это уровень освещения и впечатление клиентов.",
+     "f": "Потолки 2,7 м и кондиционеры в окнах — это уровень класса B, не A. Не переплачивайте за слово в рекламе."},
+    {"q": "Хватит ли парковки сотрудникам, гостям, грузовому транспорту?",
+     "e": "Норма: 1 машино-место на 60-80 м² арендуемой площади. Команда 30 человек = минимум 15-20 мест + отдельные гостевые. Грузовая зона и грузовой лифт — обязательно для приёмки мебели/техники.",
+     "f": "Гостевой парковки нет, грузовой лифт через парадный вход — комфорт сильно проседает с первого месяца."},
+    # Группа 2: Что вокруг и кто за этим стоит
+    {"q": "Есть ли резерв интернета и электричества?",
+     "e": "Для серьёзного бизнеса в офисе должно быть два независимых провайдера интернета и генератор на случай отключения света. Час простоя для банка, IT-команды или юристов — это деньги и репутация.",
+     "f": "Один провайдер и нет генератора — для серьёзного бизнеса риск. Простой = реальные потери, считайте."},
+    {"q": "Кто арендует соседние офисы в этом БЦ?",
+     "e": "Крупные банки, известные IT-компании, международные консалтинговые и юридические фирмы — знак качества. Спросите у соседей мнение об управляющей компании — самые честные отзывы получите там, не у арендодателя.",
+     "f": "Соседи — мелкие неизвестные компании, кафе, нотариусы — это не уровень класса А. Ликвидность объекта при перепродаже ниже."},
+    {"q": "Кто управляет зданием и сколько вы за это платите?",
+     "e": "Хорошие управляющие компании Москвы все на слуху — спросите у брокера или соседей. Охрана и сервис в классе А работают 24/7, не «по будням до 18:00». Стоимость эксплуатации — обычно 6-12 тыс ₽ за квадрат в год.",
+     "f": "УК «своя» от собственника без опыта класса А, тариф эксплуатации «уточним позже» — будут скрытые расходы и халтура в сервисе."},
+    {"q": "Кто собственник здания, нет ли проблем с документами?",
+     "e": "Узнайте, кто собственник — компания (предпочтительно публичная) или частное лицо. Здание в залоге или нет — это бесплатно проверяется в Росреестре за 5 минут. Назначение участка должно быть «деловое управление», не «склад» или «промышленность».",
+     "f": "Здание в залоге, собственник в банкротстве или назначение участка «не то» — любая проблема может сорвать договор."},
 ]
 
 PAGE_TAGS = [
-    "Локация и финансовая модель",    # стр. 2 (Q1-Q2)
-    "Здание и собственник",           # стр. 3 (Q3-Q5)
-    "Инженерия и арендаторы",         # стр. 4 (Q6-Q7)
+    "Где, почём, как устроено",        # стр. 2 (Q1-Q4)
+    "Что вокруг и кто за этим стоит",  # стр. 3 (Q5-Q8)
 ]
 
-# Сколько параметров на каждой content-странице (3 страницы)
-ITEMS_PER_PAGE = [2, 3, 2]
+ITEMS_PER_PAGE = [4, 4]
+TOTAL_PAGES = 4
 
-# AI-фоны: коммерческая премиум-эстетика, единый стиль
+# AI-фоны: коммерческая премиум-эстетика (4 страницы)
 BG_HINTS = {
     1: "panoramic floor-to-ceiling glass facade of a modern class A office building at dawn, blurred business district skyline visible through reflective glass, deep teal-navy tones, premium editorial photography, no people, no specific recognizable building",
     2: "modern empty conference room with floor-to-ceiling windows overlooking a city, polished concrete floor, minimalist long wooden table, leather chairs, warm directional light from one side, premium aesthetic, no people",
     3: "architectural floor plan of a modern office layout on a dark wooden surface, scale ruler, technical pen, top-down editorial view, premium documentation aesthetic, soft side light",
-    4: "premium office reception lobby with polished marble counter, brass details, modern lighting, leather seating, no people, evening warm light, contemplative atmosphere",
-    5: "premium executive office at dusk with city lights visible through floor-to-ceiling glass window, a single large leather chair facing the window, polished wood desk with closed laptop, brass desk lamp casting warm light, contemplative mood",
+    4: "premium executive office at dusk with city lights visible through floor-to-ceiling glass window, a single large leather chair facing the window, polished wood desk with closed laptop, brass desk lamp casting warm light, contemplative mood",
 }
 
 META = {
     "tag": "Чек-лист · бесплатно",
-    "title": "7 параметров\nоценки офиса<br>класса А",
-    "subtitle": "Чек-лист, по которому я сравниваю объекты перед сделкой — для собственника или инвестора. То, на что смотрят брокеры Cushman, JLL, Knight Frank до отправки клиента в шорт-лист.",
-    "title_anchor_label": "параметров до подписания договора",
-    "title_anchor_num": "7",
-    "epigraph": "Хороший офис класса А виден за 15 минут.<br>Плохой — раскрывается через 5 лет аренды.<br>Эти 7 параметров отделяют одно от другого.",
+    "title": "8 параметров\nоценки офиса<br>класса А",
+    "subtitle": "Простой чек-лист на одну встречу с арендодателем — для собственника или инвестора. Без брокерского жаргона. Только то, что вы можете увидеть и проверить сами.",
+    "title_anchor_label": "параметров до подписания",
+    "title_anchor_num": "8",
+    "epigraph": "Хороший офис класса А виден за 15 минут.<br>Плохой — раскрывается через 5 лет аренды.<br>Эти 8 параметров отделяют одно от другого.",
 }
 
 CTA = {
@@ -101,7 +97,7 @@ CTA = {
 CODE = "ОФИС"
 
 
-# ── CSS: тёмная палитра v4.0 (повторяет a_spisok для единства фирстиля) ────
+# ── CSS: тёмная палитра v4.0, БЕЗ виньетки (ровный лёгкий оверлей) ──────────
 
 CSS = """
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=PT+Serif:ital,wght@0,400;0,700;1,400;1,700&display=swap');
@@ -112,8 +108,8 @@ CSS = """
   --text: #E7E2D8;
   --accent: #FF5A2A;
   --steel: #4A6A7B;
-  --muted: rgba(231,226,216,0.62);
-  --line: rgba(231,226,216,0.18);
+  --muted: rgba(231,226,216,0.68);
+  --line: rgba(231,226,216,0.20);
 }
 html, body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
 
@@ -125,11 +121,11 @@ html, body { background: var(--bg); color: var(--text); font-family: 'Inter', sa
   page-break-after: always;
 }
 .page:last-child { page-break-after: auto; }
+
+/* РОВНЫЙ оверлей без виньетки — фон фото видно равномерно */
 .page::before {
   content: ""; position: absolute; inset: 0; z-index: 1;
-  background: linear-gradient(180deg,
-    rgba(11,46,56,0.92) 0%, rgba(11,46,56,0.78) 32%,
-    rgba(11,46,56,0.66) 56%, rgba(11,46,56,0.86) 100%);
+  background: rgba(11,46,56,0.55);
 }
 .page > * { position: relative; z-index: 2; }
 .page > .foot { margin-top: auto; }
@@ -171,24 +167,26 @@ html, body { background: var(--bg); color: var(--text); font-family: 'Inter', sa
   font-family: 'PT Serif', serif; font-weight: 700;
   font-size: 46pt; line-height: 1.02; letter-spacing: -1pt;
   color: var(--text); white-space: pre-line;
-  text-shadow: 0 2px 24px rgba(0,0,0,0.45);
+  text-shadow: 0 2px 24px rgba(0,0,0,0.55);
 }
 .cover-subtitle {
-  font-size: 12pt; line-height: 1.55; color: rgba(231,226,216,0.82);
+  font-size: 12pt; line-height: 1.55; color: rgba(231,226,216,0.88);
   margin-top: 7mm; max-width: 150mm;
+  text-shadow: 0 1px 10px rgba(0,0,0,0.4);
 }
 .cover-stat { margin-top: 10mm; display: inline-flex; align-items: baseline; gap: 5mm; }
 .cover-stat .v {
   font-family: 'PT Serif', serif; font-weight: 700; font-style: italic;
   font-size: 56pt; line-height: 1; color: var(--accent); letter-spacing: -2pt;
+  text-shadow: 0 2px 16px rgba(0,0,0,0.5);
 }
 .cover-stat .l {
   font-size: 9pt; letter-spacing: 2pt; text-transform: uppercase;
-  color: rgba(231,226,216,0.7); max-width: 50mm; line-height: 1.4;
+  color: rgba(231,226,216,0.78); max-width: 50mm; line-height: 1.4;
 }
 
 /* === CONTENT === */
-.content-body { flex: 1; display: flex; flex-direction: column; padding-top: 6mm; }
+.content-body { flex: 1; display: flex; flex-direction: column; justify-content: space-between; padding-top: 6mm; }
 .content-tag {
   display: inline-flex; align-self: flex-start;
   font-size: 9pt; letter-spacing: 2.4pt; text-transform: uppercase;
@@ -196,30 +194,33 @@ html, body { background: var(--bg); color: var(--text); font-family: 'Inter', sa
   border-left: 3px solid var(--accent); padding: 3px 0 3px 11px;
   margin-bottom: 7mm;
 }
+.questions { flex: 1; display: flex; flex-direction: column; justify-content: space-evenly; }
 .q {
   display: grid; grid-template-columns: 14mm 1fr; gap: 4mm;
-  padding: 3.5mm 0;
+  padding: 3mm 0;
 }
 .q + .q { border-top: 1px solid var(--line); }
 .q .num {
   font-family: 'PT Serif', serif; font-weight: 700; font-style: italic;
   font-size: 26pt; line-height: 1; color: var(--accent);
   letter-spacing: -1pt;
+  text-shadow: 0 1px 12px rgba(0,0,0,0.4);
 }
-.q .body { display: flex; flex-direction: column; gap: 1.5mm; }
+.q .body { display: flex; flex-direction: column; gap: 1.8mm; }
 .q .question {
   font-family: 'PT Serif', serif; font-weight: 700;
-  font-size: 11.5pt; line-height: 1.25; color: var(--text);
-  text-shadow: 0 1px 14px rgba(0,0,0,0.4);
+  font-size: 12pt; line-height: 1.25; color: var(--text);
+  text-shadow: 0 1px 14px rgba(0,0,0,0.5);
 }
 .q .explain {
-  font-size: 9.5pt; line-height: 1.45; color: rgba(231,226,216,0.86);
+  font-size: 10pt; line-height: 1.5; color: rgba(231,226,216,0.92);
+  text-shadow: 0 1px 8px rgba(0,0,0,0.35);
 }
 .q .flag {
-  font-size: 9pt; line-height: 1.4; color: #FFD0BF; font-weight: 500;
-  background: rgba(255,90,42,0.13); padding: 1.8mm 2.5mm;
+  font-size: 9.5pt; line-height: 1.45; color: #FFD8C8; font-weight: 500;
+  background: rgba(255,90,42,0.18); padding: 2mm 3mm;
   border-radius: 1.5mm; border-left: 2px solid var(--accent);
-  margin-top: 0.5mm;
+  margin-top: 1mm;
 }
 
 /* === CTA === */
@@ -278,7 +279,7 @@ html, body { background: var(--bg); color: var(--text); font-family: 'Inter', sa
 """
 
 
-# ── AI-фоны ─────────────────────────────────────────────────────────────────
+# ── AI-фоны (с reuse) ───────────────────────────────────────────────────────
 
 def _generate_backgrounds(out_dir: Path) -> dict[int, str]:
     try:
@@ -293,7 +294,7 @@ def _generate_backgrounds(out_dir: Path) -> dict[int, str]:
     def gen_one(num: int, hint: str):
         existing = out_dir / f"bg-{num}.png"
         if existing.exists() and existing.stat().st_size > 50_000:
-            print(f"[B] = bg-{num}.png exists, reuse ({existing.stat().st_size // 1024} KB)")
+            print(f"[B] = bg-{num}.png reuse ({existing.stat().st_size // 1024} KB)")
             return num, existing.name
         try:
             path = out_dir / f"bg-{num}.png"
@@ -354,7 +355,7 @@ def _render_params(items: list[dict], start: int) -> str:
 
 
 def build_html(bgs: dict[int, str]) -> str:
-    total = 5
+    total = TOTAL_PAGES
 
     page1 = (
         _page_open(1, bgs)
@@ -385,13 +386,16 @@ def build_html(bgs: dict[int, str]) -> str:
             + _brand_strip(f"Чек-лист · {page_idx:02d} / {total:02d}")
             + '<div class="content-body">'
             + f'<div class="content-tag">{tag}</div>'
+            + '<div class="questions">'
             + _render_params(items, start=start)
+            + '</div>'
             + '</div>'
             + _foot(page_idx, total)
             + '</div>'
         )
         content_pages.append(page)
 
+    cta_idx = total  # последняя страница
     cta_card = (
         '<div class="cta-card">'
         f'<div class="cta-tag">{CTA["tag"]}</div>'
@@ -408,26 +412,26 @@ def build_html(bgs: dict[int, str]) -> str:
         '</div>'
         '</div>'
     )
-    page5 = (
-        _page_open(5, bgs)
-        + _brand_strip(f"Чек-лист · 05 / {total:02d}")
+    page_cta = (
+        _page_open(cta_idx, bgs)
+        + _brand_strip(f"Чек-лист · {cta_idx:02d} / {total:02d}")
         + '<div class="cta-body">' + cta_card + '</div>'
-        + _foot(5, total)
+        + _foot(cta_idx, total)
         + '</div>'
     )
 
     return (
         '<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8">'
-        '<title>7 параметров оценки офиса класса А</title>'
+        '<title>8 параметров оценки офиса класса А</title>'
         f'<style>{CSS}</style></head>'
-        f'<body>{page1}{"".join(content_pages)}{page5}</body></html>'
+        f'<body>{page1}{"".join(content_pages)}{page_cta}</body></html>'
     )
 
 
 def main() -> int:
     out_dir = HERE / "b_office"
     out_dir.mkdir(parents=True, exist_ok=True)
-    print("[B] → генерю 5 AI-фонов (Gemini, параллельно, с reuse)...")
+    print("[B] → 4 AI-фона (Gemini, reuse если есть)...")
     bgs = _generate_backgrounds(out_dir)
     html_path = out_dir / "b_office.html"
     pdf_path = out_dir / "b_office.pdf"
