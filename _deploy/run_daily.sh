@@ -21,8 +21,9 @@ $PY -u parser.py || echo "PARSER FAILED, continuing"
 echo "--- [2/5] processor ---"
 $PY -u processor.py || echo "PROCESSOR FAILED, continuing"
 
-echo "--- [3/5] notifier ---"
-$PY -u notifier.py || echo "NOTIFIER FAILED, continuing"
+# DISABLED по запросу Ивана: только дайджест, без алёртов
+# echo "--- [3/5] notifier ---"
+# $PY -u notifier.py || echo "NOTIFIER FAILED, continuing"
 
 echo "--- [4/5] daily_digest ---"
 $PY -u daily_digest.py || echo "DIGEST FAILED"

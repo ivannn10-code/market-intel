@@ -222,7 +222,7 @@ def handle_post_topic_answer(chat_id: str, topic: str, db: DB) -> None:
                 "--rubric", "method",
                 "--topic-hint", topic,
             ],
-            capture_output=True, text=True, timeout=120,
+            capture_output=True, text=True, timeout=300,
             cwd=str(CONTENT_ENGINE_DIR),
             env={**__import__('os').environ, "PYTHONIOENCODING": "utf-8"},
         )
@@ -239,7 +239,7 @@ def handle_post_topic_answer(chat_id: str, topic: str, db: DB) -> None:
         else:
             bot.send_message(chat_id, f"<b>Не нашёл файл драфта.</b>\n<code>{result.stdout[-800:]}</code>", buttons=MENU_INLINE)
     except subprocess.TimeoutExpired:
-        bot.send_message(chat_id, "<b>Таймаут генерации (120с).</b> Попробуй снова.", buttons=MENU_INLINE)
+        bot.send_message(chat_id, "<b>Таймаут генерации (300с).</b> Попробуй снова.", buttons=MENU_INLINE)
     except Exception as exc:
         bot.send_message(chat_id, f"<b>Ошибка:</b>\n<code>{bot.html_escape(str(exc))}</code>", buttons=MENU_INLINE)
 
